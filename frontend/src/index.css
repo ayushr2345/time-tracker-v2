@@ -129,3 +129,71 @@
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* Toast styling to match app theme */
+.Toastify__toast-container {
+  z-index: 9999 !important;
+}
+
+/* More specific selectors to override react-toastify defaults */
+.Toastify__toast-container .Toastify__toast,
+.Toastify__toast-container .Toastify__toast--dark,
+.Toastify__toast-container .Toastify__toast-theme--dark {
+  /* Translucent glass panel matching app background (more translucent) */
+  background-color: rgba(8,12,28,0.32) !important;
+  background-image: linear-gradient(180deg, rgba(99,102,241,0.03), rgba(168,85,247,0.02)) !important;
+  color: #eef2ff !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.4) !important;
+  backdrop-filter: blur(6px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(110%) !important;
+  border-radius: 12px !important;
+}
+
+.Toastify__toast-container .Toastify__toast .Toastify__toast-body,
+.Toastify__toast-container .Toastify__toast--dark .Toastify__toast-body,
+.Toastify__toast-container .Toastify__toast-theme--dark .Toastify__toast-body {
+  color: #e6e6fa !important;
+  font-weight: 600 !important;
+}
+
+/* Specific styling for the interactive confirm-delete toast to keep it crisp */
+.Toastify__toast-container .confirm-toast {
+  /* Slightly more opaque and tinted to match app background */
+  background-color: rgba(18,20,32,0.90) !important;
+  background-image: linear-gradient(180deg, rgba(66,56,125,0.02), rgba(25,10,60,0.02)) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 14px 44px rgba(2,6,23,0.54) !important;
+  backdrop-filter: blur(10px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(130%) !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+}
+
+.Toastify__toast-container .confirm-toast input {
+  background-color: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  color: #fff !important;
+}
+
+.Toastify__toast-container .Toastify__toast--success,
+.Toastify__toast-container .Toastify__toast--success.Toastify__toast-theme--dark {
+  /* subtle success tint kept low-opacity so base panel remains translucent */
+  background-image: linear-gradient(90deg, rgba(59,130,246,0.04), rgba(139,92,246,0.02)) !important;
+  border-left: 4px solid #8b5cf6 !important;
+}
+
+.Toastify__toast-container .Toastify__toast--error,
+.Toastify__toast-container .Toastify__toast--error.Toastify__toast-theme--dark {
+  /* subtle error tint kept low-opacity so base panel remains translucent */
+  background-image: linear-gradient(90deg, rgba(236,72,153,0.04), rgba(245,158,11,0.02)) !important;
+  border-left: 4px solid #f43f5e !important;
+}
+
+.Toastify__toast-container .Toastify__progress-bar {
+  background: linear-gradient(90deg, #60a5fa, #a78bfa) !important;
+}
+
+.Toastify__toast-container .Toastify__close-button svg {
+  stroke: #e6e6fa !important;
+}

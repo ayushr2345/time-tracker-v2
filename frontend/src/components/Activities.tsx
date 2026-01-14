@@ -1,9 +1,70 @@
 import { useState } from "react";
+import { ToastContainer, toast, Slide } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Activities() {
   const [activities, setActivities] = useState<
     Array<{ id: string; name: string; color: string }>
   >([]);
+
+  const showDeleteConfirm = (act: { id: string; name: string }) => {
+    const ConfirmDeleteToast: React.FC<{
+      act: { id: string; name: string };
+      onConfirm: () => void;
+      onCancel: () => void;
+    }> = ({ act, onConfirm, onCancel }) => {
+      const [value, setValue] = useState("");
+      return (
+        <div className="confirm-toast max-w-md w-full p-3">
+          <div className="mb-2 text-white font-semibold">Delete "{act.name}"?</div>
+          <div className="mb-3 text-gray-300 text-sm">Type the activity name to confirm.</div>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={`Type ${act.name} to confirm`}
+            className="w-full px-3 py-2 rounded-md bg-white/6 text-white placeholder-gray-400 mb-3 border border-white/10"
+          />
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={onCancel}
+              className="px-3 py-2 rounded-lg bg-white/10 text-white font-bold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm()}
+              disabled={value !== act.name}
+              className="px-3 py-2 rounded-lg bg-red-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    let toastId: string | number | undefined;
+    toastId = toast(
+      <ConfirmDeleteToast
+        act={act}
+        onConfirm={() => {
+          setActivities((prev) => prev.filter((a) => a.id !== act.id));
+          toast.dismiss(toastId);
+          toast.success(`Deleted "${act.name}"`);
+        }}
+        onCancel={() => {
+          toast.dismiss(toastId);
+        }}
+      />,
+      {
+        autoClose: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        closeButton: false,
+        draggable: false,
+      }
+    );
+  };
 
   return (
     <div>
@@ -180,14 +241,19 @@ function Activities() {
                 if (nameInput && colorInput) {
                   const name = nameInput.value.trim();
                   const color = colorInput.value || "#6366f1";
+                    if (!name) {
+                      toast.error("Please enter an activity name");
+                      return;
+                    }
 
-                  if (name && color) {
-                    const newActivity = {
-                      id: Date.now().toString(),
-                      name,
-                      color,
-                    };
-                    setActivities([...activities, newActivity]);
+                    if (name && color) {
+                      const newActivity = {
+                        id: Date.now().toString(),
+                        name,
+                        color,
+                      };
+                      setActivities([...activities, newActivity]);
+                      toast.success(`Added "${name}" to activities list`);
                     // Clear the inputs and reset color preview
                     nameInput.value = "";
                     colorInput.value = "#6366f1";
@@ -281,9 +347,7 @@ function Activities() {
                     </span>
                   </span>
                   <button
-                    onClick={() =>
-                      setActivities(activities.filter((a) => a.id !== act.id))
-                    }
+                    onClick={() => showDeleteConfirm(act)}
                     className="ml-4 px-5 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-all duration-300 font-bold text-sm flex items-center gap-2 hover:scale-105 active:scale-95"
                   >
                     <span className="text-lg">❌</span>
@@ -294,6 +358,19 @@ function Activities() {
             </ul>
           )}
         </div>
+        <ToastContainer
+          transition={Slide}
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </div>
     </div>
   );
