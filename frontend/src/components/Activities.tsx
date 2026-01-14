@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import type { Activity } from "../types/activity";
+import { getInitialActivities } from "../data/fixtures";
 
 function Activities() {
-  const [activities, setActivities] = useState<
-    Array<{ id: string; name: string; color: string }>
-  >([]);
+  const [activities, setActivities] = useState<Activity[]>(getInitialActivities());
 
-  const showDeleteConfirm = (act: { id: string; name: string }) => {
+  const showDeleteConfirm = (act: Activity) => {
     const ConfirmDeleteToast: React.FC<{
       act: { id: string; name: string };
       onConfirm: () => void;
