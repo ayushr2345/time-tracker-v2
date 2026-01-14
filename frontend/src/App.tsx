@@ -1,4 +1,3 @@
-import "./App.css";
 import UI from "./components/UI";
 import Overview from "./components/Overview";
 import TimerMode from "./components/TimerMode";
