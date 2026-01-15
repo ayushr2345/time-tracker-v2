@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import type { Activity } from "../types/activity";
 import { getInitialActivities } from "../data/fixtures";
 
