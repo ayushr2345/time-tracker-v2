@@ -31,7 +31,7 @@ import { getInitialActivities, getInitialRecords } from "../data/fixtures";
 
 const sumLogsByPeriod = (
   logs: ActivityLogEntry[],
-  period: "today" | "week" | "month" | "lastMonth" | "year"
+  period: "today" | "week" | "month" | "lastMonth" | "year" | "prevYear"
 ) => {
   const now = new Date();
 
@@ -57,18 +57,9 @@ const sumLogsByPeriod = (
   );
   const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-  const toFullDate = (baseDate: Date, timeStr: Date) => {
-    const hours = timeStr.getHours();
-    const minutes = timeStr.getMinutes();
-    const fullDate = new Date(baseDate);
-    fullDate.setHours(hours, minutes, 0, 0);
-    return fullDate;
-  };
-
   return logs.reduce((total, log) => {
-    const logDate = new Date(log.createdAt); // use log.createdAt as the actual date
-    const start = toFullDate(logDate, log.startTime);
-    const end = toFullDate(logDate, log.endTime);
+    const start = log.startTime;
+    const end = log.endTime;
     const duration = (end.getTime() - start.getTime()) / 1000; // seconds
 
     switch (period) {
@@ -87,6 +78,9 @@ const sumLogsByPeriod = (
         break;
       case "year":
         if (start >= startOfYear) return total + duration;
+        break;
+      case "prevYear":
+        if (start < startOfYear) return total + duration;
         break;
     }
 
@@ -423,6 +417,12 @@ function Overview() {
                       gradient: "from-pink-500 via-pink-600 to-rose-500",
                       icon: "🗓️",
                     },
+                    {
+                      label: "Previous Year",
+                      value: sumLogsByPeriod(logs, "prevYear"),
+                      gradient: "from-rose-500 via-rose-600 to-purple-500",
+                      icon: "🗓️",
+                    },
                   ].map((item, idx) => (
                     <div
                       key={idx}
@@ -504,7 +504,7 @@ function Overview() {
                         return (
                           <li
                             key={log._id}
-                            className="px-5 sm:px-6 py-5 flex justify-between items-center hover:bg-white/5 transition-all duration-300 group"
+                            className="px-5 sm:px-6 py-9 flex justify-between items-center hover:bg-white/5 transition-all duration-300 group"
                           >
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                               <div

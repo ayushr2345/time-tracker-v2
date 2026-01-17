@@ -15,296 +15,82 @@ export const DEFAULT_ACTIVITIES: Activity[] = [
   { _id: "4", name: "Office", color: "#f59e0b" },
 ];
 
-export const DEFAULT_RECORDS: ActivityLogEntry[] = [
-  {
-    _id: "r1",
-    activityId: "2",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 60),
-    endTime: new Date(Date.now() - 1000 * 60 * 45),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 45),
-  },
-  {
-    _id: "r2",
-    activityId: "2",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 45),
-    endTime: new Date(Date.now() - 1000 * 60 * 35),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 35),
-  },
-{
-    _id: "r3",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 120),
-    endTime: new Date(Date.now() - 1000 * 60 * 90),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 90),
-},
-{
-    _id: "r4",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 90),
-    endTime: new Date(Date.now() - 1000 * 60 * 60),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 60),
-},
-{
-    _id: "r5",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 180),
-    endTime: new Date(Date.now() - 1000 * 60 * 120),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 120),
-},
-{
-    _id: "r6",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 150),
-    endTime: new Date(Date.now() - 1000 * 60 * 100),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 100),
-},
-{
-    _id: "r7",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 110),
-    endTime: new Date(Date.now() - 1000 * 60 * 65),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 65),
-},
-{
-    _id: "r8",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 95),
-    endTime: new Date(Date.now() - 1000 * 60 * 55),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 55),
-},
-{
-    _id: "r9",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 140),
-    endTime: new Date(Date.now() - 1000 * 60 * 80),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 80),
-},
-{
-    _id: "r10",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 160),
-    endTime: new Date(Date.now() - 1000 * 60 * 100),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 100),
-},
-{
-    _id: "r11",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 130),
-    endTime: new Date(Date.now() - 1000 * 60 * 70),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 70),
-},
-{
-    _id: "r12",
-    activityId: "1",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 175),
-    endTime: new Date(Date.now() - 1000 * 60 * 115),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 115),
-},
-{
-    _id: "r13",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 100),
-    endTime: new Date(Date.now() - 1000 * 60 * 70),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 70),
-},
-{
-    _id: "r14",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 120),
-    endTime: new Date(Date.now() - 1000 * 60 * 75),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 75),
-},
-{
-    _id: "r15",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 90),
-    endTime: new Date(Date.now() - 1000 * 60 * 60),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 60),
-},
-{
-    _id: "r16",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 110),
-    endTime: new Date(Date.now() - 1000 * 60 * 50),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 50),
-},
-{
-    _id: "r17",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 150),
-    endTime: new Date(Date.now() - 1000 * 60 * 90),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 90),
-},
-{
-    _id: "r18",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 80),
-    endTime: new Date(Date.now() - 1000 * 60 * 40),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 40),
-},
-{
-    _id: "r19",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 130),
-    endTime: new Date(Date.now() - 1000 * 60 * 80),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 80),
-},
-{
-    _id: "r20",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 170),
-    endTime: new Date(Date.now() - 1000 * 60 * 100),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 100),
-},
-{
-    _id: "r21",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 95),
-    endTime: new Date(Date.now() - 1000 * 60 * 65),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 65),
-},
-{
-    _id: "r22",
-    activityId: "3",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 140),
-    endTime: new Date(Date.now() - 1000 * 60 * 95),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 95),
-},
-{
-    _id: "r23",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 60),
-    endTime: new Date(Date.now() - 1000 * 60 * 30),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 30),
-},
-{
-    _id: "r24",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 120),
-    endTime: new Date(Date.now() - 1000 * 60 * 60),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 60),
-},
-{
-    _id: "r25",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 90),
-    endTime: new Date(Date.now() - 1000 * 60 * 45),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 45),
-},
-{
-    _id: "r26",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 150),
-    endTime: new Date(Date.now() - 1000 * 60 * 75),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 75),
-},
-{
-    _id: "r27",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 110),
-    endTime: new Date(Date.now() - 1000 * 60 * 55),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 55),
-},
-{
-    _id: "r28",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 75),
-    endTime: new Date(Date.now() - 1000 * 60 * 35),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 35),
-},
-{
-    _id: "r29",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 140),
-    endTime: new Date(Date.now() - 1000 * 60 * 85),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 85),
-},
-{
-    _id: "r30",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 160),
-    endTime: new Date(Date.now() - 1000 * 60 * 100),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 100),
-},
-{
-    _id: "r31",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 100),
-    endTime: new Date(Date.now() - 1000 * 60 * 50),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 50),
-},
-{
-    _id: "r32",
-    activityId: "4",
-    createdAt: new Date(),
-    isActive: false,
-    startTime: new Date(Date.now() - 1000 * 60 * 130),
-    endTime: new Date(Date.now() - 1000 * 60 * 70),
-    lastHeartbeatAt: new Date(Date.now() - 1000 * 60 * 70),
-},
-];
+export const DEFAULT_RECORDS: ActivityLogEntry[] = (() => {
+  const records: ActivityLogEntry[] = [];
+  const activityIds = ["1", "2", "3", "4"];
+  const now = new Date();
+
+  // Helper: Subtract days
+  const getRelativeDate = (daysAgo: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - daysAgo);
+    return date;
+  };
+
+  // Helper: Add minutes to a date
+  const addMinutes = (date: Date, minutes: number) => {
+    return new Date(date.getTime() + minutes * 60000);
+  };
+
+  let idCounter = 1;
+
+  activityIds.forEach((actId) => {
+    for (let i = 0; i < 10; i++) {
+      // 1. TIMING STRATEGY
+      const daysAgo = i * 5; 
+      const startTime = getRelativeDate(daysAgo);
+      
+      // Fix time to 2:00 PM for consistency
+      startTime.setHours(14, 0, 0, 0);
+
+      // 2. WORK DURATION STRATEGY (Actual working time)
+      let workDurationMins = 60; 
+      if (actId === "1") workDurationMins = 120 + (i * 5); // Coding: ~2 hrs
+      if (actId === "2") workDurationMins = 45 + (i * 2);  // Gym: ~45 mins
+      if (actId === "3") workDurationMins = 90;            // Reading: 1.5 hrs
+      if (actId === "4") workDurationMins = 180 - (i * 10);// Riding: ~3 hrs
+
+      workDurationMins = Math.max(30, Math.min(180, workDurationMins));
+
+      // 3. DETERMINE TYPE & PAUSES
+      // Let's say odd indices are "manual", even are "timer"
+      const isTimer = i % 2 === 0;
+      const entrytype: "manual" | "timer" = isTimer ? "timer" : "manual";
+
+      let pauseHistory: { pauseStart: Date; pauseEnd: Date }[] = [];
+      let totalPauseMins = 0;
+
+      // Add pauses ONLY if it's a timer entry and divisible by 4 (so not every record has pauses)
+      if (isTimer && i % 4 === 0) {
+        // Create a 15 min pause happening 30 mins after start
+        const pauseStart = addMinutes(startTime, 30);
+        const pauseEnd = addMinutes(pauseStart, 15);
+        
+        pauseHistory.push({ pauseStart, pauseEnd });
+        totalPauseMins = 15;
+      }
+
+      // 4. CALCULATE END TIME
+      // End Time = Start + Work Duration + Total Pause Duration
+      const endTime = addMinutes(startTime, workDurationMins + totalPauseMins);
+
+      records.push({
+        _id: `r${idCounter++}`,
+        activityId: actId,
+        createdAt: getRelativeDate(daysAgo), // Created roughly when it started
+        startTime: startTime,
+        endTime: endTime,
+        lastHeartbeatAt: endTime, // For completed logs, heartbeat stops at end
+        entrytype: entrytype,
+        status: "completed", // Historical data is always completed
+        pauseHistory: pauseHistory.length > 0 ? pauseHistory : undefined
+      });
+    }
+  });
+
+  // Sort by Start Time (Newest First)
+  return records.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+})();
 
 export const isDevDummyEnabled = () => {
   try {
