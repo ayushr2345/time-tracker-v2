@@ -25,6 +25,69 @@ function TimerMode() {
     setSelectedActivityId(e.target.value);
   };
 
+  const showConfirmAddEntry = (act: Activity, duration: string) => {
+    const ConfirmAddEntry: React.FC<{
+      act: { _id: string; name: string; color: string };
+      onConfirm: () => void;
+      onCancel: () => void;
+    }> = ({ act, onConfirm, onCancel }) => {
+      return (
+        <div className="confirm-toast max-w-md w-full p-3">
+          <div className="mb-2 text-white font-semibold">
+            Log "{duration} duration" to "{act.name}"?
+          </div>
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={onCancel}
+              className="px-3 py-2 rounded-lg bg-red-500 text-white font-bold"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm()}
+              className="px-3 py-2 rounded-lg bg-green-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    let toastId: string | number | undefined;
+    toastId = toast(
+      <ConfirmAddEntry
+        act={act}
+        onConfirm={() => {
+          toast.dismiss(toastId);
+          toast.success(
+            `Saved "${
+              activities.find((a) => a._id === selectedActivityId)!.name
+            }" — ${duration}`
+          );
+
+          setIsRunning(false);
+          setElapsed(0);
+          startRef.current = null;
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }}
+        onCancel={() => {
+          toast.dismiss(toastId);
+        }}
+      />,
+      {
+        autoClose: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        closeButton: false,
+        draggable: false,
+      }
+    );
+  };
+
   const handleStart = () => {
     if (!selectedActivityId) {
       toast.error("Please select an activity to start the timer");
@@ -35,7 +98,7 @@ function TimerMode() {
     setIsRunning(true);
     setElapsed(0);
     toast.success(
-      `Started "${activities.find((a) => a.id === selectedActivityId)!.name}"`
+      `Started "${activities.find((a) => a._id === selectedActivityId)!.name}"`
     );
     intervalRef.current = window.setInterval(() => {
       setElapsed((prev) => prev + 1);
@@ -47,19 +110,14 @@ function TimerMode() {
     const now = Date.now();
     const startedAt = startRef.current ?? now;
     const duration = Math.round((now - startedAt) / 1000);
-    toast.success(
-      `Saved "${
-        activities.find((a) => a.id === selectedActivityId)!.name
-      }" — ${formatTime(duration)}`
-    );
-
-    setIsRunning(false);
-    setElapsed(0);
-    startRef.current = null;
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (duration < 5) {
+      toast.error("Duration too short to log (minimum 5 seconds)");
+      return;
     }
+    showConfirmAddEntry(
+      activities.find((a) => a._id === selectedActivityId)!,
+      formatTime(duration)
+    );
   };
 
   useEffect(() => {
@@ -100,8 +158,8 @@ function TimerMode() {
           </option>
           {activities.map((act) => (
             <option
-              key={act.id}
-              value={act.id}
+              key={act._id}
+              value={act._id}
               className="bg-gray-900 text-white"
             >
               {act.name}
@@ -113,18 +171,48 @@ function TimerMode() {
       {/* Timer Display */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur-xl opacity-50 animate-pulse-glow"></div>
-        <div className="relative glass rounded-2xl p-10 sm:p-14 text-center shadow-2xl">
-          <div className="text-5xl sm:text-6xl lg:text-7xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-gradient">
-            {formatTime(isRunning ? elapsed : 0)}
+        <div className="relative glass rounded-2xl p-10 sm:p-14 shadow-2xl">
+          <div className="flex flex-col items-center justify-between">
+        {/* Timer Display - Center */}
+        <div className="text-5xl sm:text-6xl lg:text-7xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-gradient text-center w-full">
+          {formatTime(isRunning ? elapsed : 0)}
+        </div>
+
+        {/* Recording Status - Center */}
+        {isRunning && (
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+            <span className="text-base text-gray-300 font-semibold">
+          Recording...
+            </span>
           </div>
-          {isRunning && (
-            <div className="mt-5 flex items-center justify-center gap-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-              <span className="text-base text-gray-300 font-semibold">
-                Recording...
-              </span>
-            </div>
-          )}
+        )}
+          </div>
+
+            {/* Pause/Resume Button - Top Right */}
+            {isRunning || elapsed > 0 ? (
+            <button
+              onClick={() => {
+              if (isRunning) {
+                clearInterval(intervalRef.current!);
+                setIsRunning(false);
+              } else {
+                startRef.current = Date.now() - elapsed * 1000;
+                setIsRunning(true);
+                intervalRef.current = window.setInterval(() => {
+                setElapsed((prev) => prev + 1);
+                }, 1000) as unknown as number;
+              }
+              }}
+              className="justify-center absolute top-5 right-5 bg-gradient-to-r from-purple-500/70 to-pink-500/70 hover:from-purple-600 hover:to-pink-600 text-white w-12 h-12 rounded-full flex items-center transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm"
+            >
+              {isRunning ? (
+              <span className="text-2xl">⏸</span>
+              ) : (
+              <span className="text-2xl">▶</span>
+              )}
+            </button>
+            ) : null}
         </div>
       </div>
 
@@ -168,11 +256,9 @@ function TimerMode() {
 
 export default TimerMode;
 
-
-
-
-
-
+// TODO: Overnight edge case: Start timer before midnight, stop after midnight - handle correctly
+//       look up where the time spent should go (previous day vs current day) based on greater portion of time spent
+//       or split into two records automatically -- option B is better as it maintains accuracy -- no overflow of time in a single day
 // TODO: Add ability for heartbeat sounds when starting/stopping timer
 // TODO: Add heartbeat to server for sudden failures/crashes
 // TODO: Add confirmation modal when stopping timer
@@ -180,3 +266,9 @@ export default TimerMode;
 // TODO: Add option to continue previous timer if stopped accidentally
 // TODO: Add option to pause and resume timer -- if adding this, implement confirmation modal on stop to avoid confusion
 // TODO: Add visual indicator on activity select when timer is running
+// TODO: Pause and Resume functionality
+//   - Pause button to stop timer without saving but retain elapsed time
+//   - Resume button to continue from paused time
+//   - On Stop, save total elapsed time from start to stop, excluding paused duration
+//   - Update UI to show paused state clearly
+// TODO: Ensure Stop button diabled when clicked to avoid multiple clicks / but also if toast cancelled, re-enable it

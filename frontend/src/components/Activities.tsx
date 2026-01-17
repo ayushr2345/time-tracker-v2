@@ -10,7 +10,7 @@ function Activities() {
 
   const showDeleteConfirm = (act: Activity) => {
     const ConfirmDeleteToast: React.FC<{
-      act: { id: string; name: string };
+      act: { _id: string; name: string , color: string};
       onConfirm: () => void;
       onCancel: () => void;
     }> = ({ act, onConfirm, onCancel }) => {
@@ -49,7 +49,7 @@ function Activities() {
       <ConfirmDeleteToast
         act={act}
         onConfirm={() => {
-          setActivities((prev) => prev.filter((a) => a.id !== act.id));
+          setActivities((prev) => prev.filter((a) => a._id !== act._id));
           toast.dismiss(toastId);
           toast.success(`Deleted "${act.name}"`);
         }}
@@ -249,7 +249,7 @@ function Activities() {
 
                     if (name && color) {
                       const newActivity = {
-                        id: Date.now().toString(),
+                        _id: Date.now().toString(),
                         name,
                         color,
                       };
@@ -328,7 +328,7 @@ function Activities() {
             <ul className="space-y-3">
               {activities.map((act) => (
                 <li
-                  key={act.id}
+                  key={act._id}
                   className="group glass rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex justify-between items-center"
                   style={{
                     borderLeft: `4px solid ${act.color}`,

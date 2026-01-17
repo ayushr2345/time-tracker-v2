@@ -1,8 +1,8 @@
 /* Type definitions for activities (type-only) */
 export type Activity = {
-    id: string;
+    _id: string;
     name: string;
-    color: string
+    color: string;
 };
 
 

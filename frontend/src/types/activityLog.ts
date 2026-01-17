@@ -1,7 +1,13 @@
 // Types for saved time records (Activity Log entries)
 export type ActivityLogEntry = {
-  id: string;
+  _id: string;
   activityId: string;
-  duration: number; // seconds
-  timestamp: number; // epoch ms
+  createdAt: Date;
+  isActive: boolean;
+  startTime: Date;
+  endTime: Date;
+  lastHeartbeatAt: Date;
+
+  // to be removed later; kept for backward compatibility
+//   duration: number; // seconds
 };
