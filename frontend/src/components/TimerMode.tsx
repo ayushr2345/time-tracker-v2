@@ -140,9 +140,7 @@ function TimerMode() {
         onConfirm={() => {
           toast.dismiss(toastId);
           toast.success(
-            `Saved "${
-              activities.find((a) => a._id === selectedActivityId)!.name
-            }" — ${duration}`
+            `Reset "${activities.find((a) => a._id === selectedActivityId)!.name}" timer.`
           );
 
           setIsRunning(false);
@@ -239,18 +237,19 @@ function TimerMode() {
   };
 
   const handleResetTimer = () => {
-    showConfirmResetEntry(
-      activities.find((a) => a._id === selectedActivityId)!,
-      formatTime(elapsed)
-    );
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setIsRunning(false);
-    setElapsed(0);
-    setIsPaused(true);
-    startRef.current = null;
+    showConfirmResetEntry(
+      activities.find((a) => a._id === selectedActivityId)!,
+      formatTime(elapsed)
+    );
+    
+    // setIsRunning(false);
+    // setElapsed(0);
+    // setIsPaused(true);
+    // startRef.current = null;
   };
 
   useEffect(() => {
@@ -336,7 +335,7 @@ function TimerMode() {
             </button>
           ) : null}
           {/* Reset Button - Top Left */}
-          {!isPaused && elapsed > 0 && (
+          {elapsed > 0 && (
           <div className="justify-center absolute top-5 left-5">
             <button
               onClick={handleResetTimer}
