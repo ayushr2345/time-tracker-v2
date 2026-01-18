@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AxiosError } from "axios";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import type { Activity } from "../types/activity";
 import { getInitialActivities } from "../data/fixtures";
+
+import { getAllActivities, createActivity } from "../services/activityApi";
 
 function Activities() {
   const [activities, setActivities] = useState<Activity[]>(getInitialActivities());
@@ -66,6 +69,37 @@ function Activities() {
       }
     );
   };
+
+  const handleSubmit = async (newActivity: Omit<Activity, "_id">) => {
+    async function submitActivity() {
+      try {
+        const data = await createActivity(newActivity);
+        setActivities((prev) => [...prev, data]);
+        toast.success(`Activity "${data.name}" created successfully`);
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            `Failed to create activity: ${error.response?.data?.message || error.message}`
+          );
+          return;
+        }
+        toast.error(`Failed to create activity: ${error}`);
+      }
+    }
+    submitActivity();
+  };
+
+  useEffect(() => {
+    async function fetchActivities() {
+      try {
+        const data = await getAllActivities();
+        setActivities(data);
+      } catch (error) {
+        toast.error("Failed to fetch activities from server");
+      }
+    }
+    fetchActivities();
+  }, []);
 
   return (
     <div>
@@ -249,12 +283,11 @@ function Activities() {
 
                     if (name && color) {
                       const newActivity = {
-                        _id: Date.now().toString(),
                         name,
                         color,
                       };
-                      setActivities([...activities, newActivity]);
-                      toast.success(`Added "${name}" to activities list`);
+                      // setActivities([...activities, newActivity]);
+                      handleSubmit(newActivity);
                     // Clear the inputs and reset color preview
                     nameInput.value = "";
                     colorInput.value = "#6366f1";
@@ -378,3 +411,5 @@ function Activities() {
 }
 
 export default Activities;
+
+// TODO: need to handle add more carefully, and handle delete and implement update functionality in frontend and connect to backend
