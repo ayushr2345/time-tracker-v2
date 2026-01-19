@@ -4,24 +4,26 @@ import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import type { Activity } from "../types/activity";
-import { getInitialActivities } from "../data/fixtures";
-
-import { getAllActivities, createActivity } from "../services/activityApi";
+import { useActivities } from "../hooks/useActivities";
 
 function Activities() {
-  const [activities, setActivities] = useState<Activity[]>(getInitialActivities());
+  const{ activities, loading, addActivity } = useActivities();
 
   const showDeleteConfirm = (act: Activity) => {
     const ConfirmDeleteToast: React.FC<{
-      act: { _id: string; name: string , color: string};
+      act: { _id: string; name: string; color: string };
       onConfirm: () => void;
       onCancel: () => void;
     }> = ({ act, onConfirm, onCancel }) => {
       const [value, setValue] = useState("");
       return (
         <div className="confirm-toast max-w-md w-full p-3">
-          <div className="mb-2 text-white font-semibold">Delete "{act.name}"?</div>
-          <div className="mb-3 text-gray-300 text-sm">Type the activity name to confirm.</div>
+          <div className="mb-2 text-white font-semibold">
+            Delete "{act.name}"?
+          </div>
+          <div className="mb-3 text-gray-300 text-sm">
+            Type the activity name to confirm.
+          </div>
           <input
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -52,7 +54,7 @@ function Activities() {
       <ConfirmDeleteToast
         act={act}
         onConfirm={() => {
-          setActivities((prev) => prev.filter((a) => a._id !== act._id));
+          // setActivities((prev) => prev.filter((a) => a._id !== act._id));
           toast.dismiss(toastId);
           toast.success(`Deleted "${act.name}"`);
         }}
@@ -66,40 +68,15 @@ function Activities() {
         pauseOnHover: true,
         closeButton: false,
         draggable: false,
-      }
+      },
     );
   };
 
   const handleSubmit = async (newActivity: Omit<Activity, "_id">) => {
-    async function submitActivity() {
-      try {
-        const data = await createActivity(newActivity);
-        setActivities((prev) => [...prev, data]);
-        toast.success(`Activity "${data.name}" created successfully`);
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            `Failed to create activity: ${error.response?.data?.message || error.message}`
-          );
-          return;
-        }
-        toast.error(`Failed to create activity: ${error}`);
-      }
-    }
-    submitActivity();
+    await addActivity(newActivity);
   };
 
-  useEffect(() => {
-    async function fetchActivities() {
-      try {
-        const data = await getAllActivities();
-        setActivities(data);
-      } catch (error) {
-        toast.error("Failed to fetch activities from server");
-      }
-    }
-    fetchActivities();
-  }, []);
+  if (loading && activities.length === 0) return <div>Loading...</div>;
 
   return (
     <div>
@@ -151,16 +128,16 @@ function Activities() {
                       type="button"
                       onClick={() => {
                         const colorInput = document.getElementById(
-                          "newActivityColor"
+                          "newActivityColor",
                         ) as HTMLInputElement | null;
                         const colorPreview = document.getElementById(
-                          "colorPreview"
+                          "colorPreview",
                         ) as HTMLElement | null;
                         const colorValue = document.getElementById(
-                          "colorValue"
+                          "colorValue",
                         ) as HTMLElement | null;
                         const colorLabel = document.getElementById(
-                          "colorLabelPreview"
+                          "colorLabelPreview",
                         ) as HTMLElement | null;
 
                         if (colorInput) {
@@ -177,7 +154,7 @@ function Activities() {
                             colorLabel.style.boxShadow = `0 0 15px ${color.value}66`;
                           }
                           colorInput.dispatchEvent(
-                            new Event("input", { bubbles: true })
+                            new Event("input", { bubbles: true }),
                           );
                         }
                       }}
@@ -207,13 +184,13 @@ function Activities() {
                       onChange={(e) => {
                         const color = e.target.value;
                         const colorPreview = document.getElementById(
-                          "colorPreview"
+                          "colorPreview",
                         ) as HTMLElement | null;
                         const colorValue = document.getElementById(
-                          "colorValue"
+                          "colorValue",
                         ) as HTMLElement | null;
                         const colorLabel = document.getElementById(
-                          "colorLabelPreview"
+                          "colorLabelPreview",
                         ) as HTMLElement | null;
 
                         if (colorPreview) {
@@ -267,38 +244,37 @@ function Activities() {
             <button
               onClick={() => {
                 const nameInput = document.getElementById(
-                  "newActivityName"
+                  "newActivityName",
                 ) as HTMLInputElement | null;
                 const colorInput = document.getElementById(
-                  "newActivityColor"
+                  "newActivityColor",
                 ) as HTMLInputElement | null;
 
                 if (nameInput && colorInput) {
                   const name = nameInput.value.trim();
                   const color = colorInput.value || "#6366f1";
-                    if (!name) {
-                      toast.error("Please enter an activity name");
-                      return;
-                    }
+                  if (!name) {
+                    toast.error("Please enter an activity name");
+                    return;
+                  }
 
-                    if (name && color) {
-                      const newActivity = {
-                        name,
-                        color,
-                      };
-                      // setActivities([...activities, newActivity]);
-                      handleSubmit(newActivity);
+                  if (name && color) {
+                    const newActivity = {
+                      name,
+                      color,
+                    };
+                    handleSubmit(newActivity);
                     // Clear the inputs and reset color preview
                     nameInput.value = "";
                     colorInput.value = "#6366f1";
                     const colorPreview = document.getElementById(
-                      "colorPreview"
+                      "colorPreview",
                     ) as HTMLElement | null;
                     const colorValue = document.getElementById(
-                      "colorValue"
+                      "colorValue",
                     ) as HTMLElement | null;
                     const colorLabel = document.getElementById(
-                      "colorLabelPreview"
+                      "colorLabelPreview",
                     ) as HTMLElement | null;
                     if (colorPreview) {
                       colorPreview.style.backgroundColor = "#6366f1";
@@ -413,3 +389,4 @@ function Activities() {
 export default Activities;
 
 // TODO: need to handle add more carefully, and handle delete and implement update functionality in frontend and connect to backend
+// TODO: extract toast into generic UI component and make a hook for it and use it across the app

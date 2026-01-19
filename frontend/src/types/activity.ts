@@ -4,5 +4,3 @@ export type Activity = {
     name: string;
     color: string;
 };
-
-
