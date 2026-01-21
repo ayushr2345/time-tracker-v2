@@ -3,19 +3,34 @@ import "react-toastify/dist/ReactToastify.css";
 import type { Activity } from "../types/activity";
 import { useActivities } from "../hooks/useActivities";
 import { useConfirm } from "../hooks/useConfirmToast";
+import type React from "react";
 
 function Activities() {
-  const{ activities, loading, addActivity, deleteActivity } = useActivities();
+  const {
+    activities,
+    loading,
+    name,
+    setName,
+    selectedColor,
+    setSelectedColor,
+    presetColors,
+    addActivity,
+    deleteActivity,
+  } = useActivities();
+
   const { confirm } = useConfirm();
 
   const handleSubmit = async (newActivity: Omit<Activity, "_id">) => {
     await addActivity(newActivity);
+    setName("");
+    setSelectedColor("#6366f1");
   };
 
   const handleDelete = (act: Activity) => {
     confirm({
       title: `Delete "${act.name}"?`,
-      message: "This action cannot be undone. Type the activity name to confirm.",
+      message:
+        "This action cannot be undone. Type the activity name to confirm.",
       type: "DANGER",
       requireInput: true,
       matchText: act.name,
@@ -23,7 +38,7 @@ function Activities() {
       onConfirm: async () => {
         await deleteActivity(act._id);
       },
-      onCancel: () => {}
+      onCancel: () => {},
     });
   };
 
@@ -51,9 +66,12 @@ function Activities() {
           </h3>
           <div className="flex flex-col gap-5">
             <input
-              id="newActivityName"
               type="text"
               placeholder="Enter activity name..."
+              value={name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setName(e.target.value)
+              }
               className="w-full px-5 py-4 rounded-xl glass text-white border border-white/20 placeholder:text-gray-400 placeholder:opacity-70 bg-white/5 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 hover:border-white/40 hover:bg-white/5 font-medium"
             />
             <div className="flex flex-col gap-3">
@@ -64,50 +82,12 @@ function Activities() {
               <div className="flex items-center gap-4">
                 {/* Preset Colors */}
                 <div className="flex gap-2 flex-wrap flex-1">
-                  {[
-                    { name: "Blue", value: "#3b82f6" },
-                    { name: "Purple", value: "#8b5cf6" },
-                    { name: "Pink", value: "#ec4899" },
-                    { name: "Emerald", value: "#10b981" },
-                    { name: "Amber", value: "#f59e0b" },
-                    { name: "Cyan", value: "#06b6d4" },
-                    { name: "Orange", value: "#f97316" },
-                    { name: "Violet", value: "#a855f7" },
-                  ].map((color) => (
+                  {presetColors.map((color) => (
                     <button
                       key={color.value}
                       type="button"
                       onClick={() => {
-                        const colorInput = document.getElementById(
-                          "newActivityColor",
-                        ) as HTMLInputElement | null;
-                        const colorPreview = document.getElementById(
-                          "colorPreview",
-                        ) as HTMLElement | null;
-                        const colorValue = document.getElementById(
-                          "colorValue",
-                        ) as HTMLElement | null;
-                        const colorLabel = document.getElementById(
-                          "colorLabelPreview",
-                        ) as HTMLElement | null;
-
-                        if (colorInput) {
-                          colorInput.value = color.value;
-                          if (colorPreview) {
-                            colorPreview.style.backgroundColor = color.value;
-                            colorPreview.style.boxShadow = `0 0 15px ${color.value}66`;
-                          }
-                          if (colorValue) {
-                            colorValue.textContent = color.value.toUpperCase();
-                          }
-                          if (colorLabel) {
-                            colorLabel.style.backgroundColor = color.value;
-                            colorLabel.style.boxShadow = `0 0 15px ${color.value}66`;
-                          }
-                          colorInput.dispatchEvent(
-                            new Event("input", { bubbles: true }),
-                          );
-                        }
+                        setSelectedColor(color.value);
                       }}
                       className="w-10 h-10 rounded-xl border-2 border-white/20 hover:border-white/60 transition-all shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                       style={{
@@ -121,53 +101,20 @@ function Activities() {
                 {/* Custom Color Picker */}
                 <div className="flex items-center gap-3">
                   <label
-                    htmlFor="newActivityColor"
                     className="text-sm text-gray-300 font-medium whitespace-nowrap"
                   >
                     Custom:
                   </label>
                   <div className="relative">
                     <input
-                      id="newActivityColor"
                       type="color"
                       defaultValue="#6366f1"
                       className="w-14 h-14 rounded-xl border-2 border-white/20 cursor-pointer hover:border-white/60 transition-all shadow-lg hover:scale-110 opacity-0 absolute z-10"
                       onChange={(e) => {
-                        const color = e.target.value;
-                        const colorPreview = document.getElementById(
-                          "colorPreview",
-                        ) as HTMLElement | null;
-                        const colorValue = document.getElementById(
-                          "colorValue",
-                        ) as HTMLElement | null;
-                        const colorLabel = document.getElementById(
-                          "colorLabelPreview",
-                        ) as HTMLElement | null;
-
-                        if (colorPreview) {
-                          colorPreview.style.backgroundColor = color;
-                          colorPreview.style.boxShadow = `0 0 15px ${color}66`;
-                        }
-                        if (colorValue) {
-                          colorValue.textContent = color.toUpperCase();
-                        }
-                        if (colorLabel) {
-                          colorLabel.style.backgroundColor = color;
-                          colorLabel.style.boxShadow = `0 0 15px ${color}66`;
-                        }
+                        setSelectedColor(e.target.value);
                       }}
                     />
-                    <label
-                      htmlFor="newActivityColor"
-                      id="colorLabelPreview"
-                      className="w-14 h-14 rounded-xl border-2 border-white/20 cursor-pointer hover:border-white/60 transition-all shadow-lg hover:scale-110 flex items-center justify-center text-white text-xs font-bold pointer-events-none"
-                      style={{
-                        backgroundColor: "#6366f1",
-                        boxShadow: "0 0 15px rgba(99, 102, 241, 0.4)",
-                      }}
-                    >
                       🎨
-                    </label>
                   </div>
                 </div>
               </div>
@@ -178,70 +125,29 @@ function Activities() {
                 </span>
                 <div
                   id="colorPreview"
+
                   className="w-8 h-8 rounded-full border-2 border-white/30 shadow-lg transition-all"
                   style={{
-                    backgroundColor: "#6366f1",
-                    boxShadow: "0 0 15px rgba(99, 102, 241, 0.4)",
+                    backgroundColor: selectedColor,
+                    boxShadow: `0 0 15px ${selectedColor}40`,
                   }}
                 ></div>
                 <span
                   id="colorValue"
                   className="text-sm text-white font-mono font-semibold ml-auto"
                 >
-                  #6366F1
+                  {selectedColor.toUpperCase()}
                 </span>
               </div>
             </div>
             <button
+              type="button"
               onClick={() => {
-                const nameInput = document.getElementById(
-                  "newActivityName",
-                ) as HTMLInputElement | null;
-                const colorInput = document.getElementById(
-                  "newActivityColor",
-                ) as HTMLInputElement | null;
-
-                if (nameInput && colorInput) {
-                  const name = nameInput.value.trim();
-                  const color = colorInput.value || "#6366f1";
-                  if (!name) {
-                    toast.error("Please enter an activity name");
-                    return;
-                  }
-
-                  if (name && color) {
-                    const newActivity = {
-                      name,
-                      color,
-                    };
-                    handleSubmit(newActivity);
-                    // Clear the inputs and reset color preview
-                    nameInput.value = "";
-                    colorInput.value = "#6366f1";
-                    const colorPreview = document.getElementById(
-                      "colorPreview",
-                    ) as HTMLElement | null;
-                    const colorValue = document.getElementById(
-                      "colorValue",
-                    ) as HTMLElement | null;
-                    const colorLabel = document.getElementById(
-                      "colorLabelPreview",
-                    ) as HTMLElement | null;
-                    if (colorPreview) {
-                      colorPreview.style.backgroundColor = "#6366f1";
-                      colorPreview.style.boxShadow =
-                        "0 0 15px rgba(99, 102, 241, 0.4)";
-                    }
-                    if (colorValue) {
-                      colorValue.textContent = "#6366F1";
-                    }
-                    if (colorLabel) {
-                      colorLabel.style.backgroundColor = "#6366f1";
-                      colorLabel.style.boxShadow =
-                        "0 0 15px rgba(99, 102, 241, 0.4)";
-                    }
-                  }
+                if (!name.trim()) {
+                  toast.error("Activity name cannot be empty.");
+                  return;
                 }
+                handleSubmit({ name: name.trim(), color: selectedColor });
               }}
               className="bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap flex items-center justify-center gap-3"
             >

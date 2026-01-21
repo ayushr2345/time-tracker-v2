@@ -1,46 +1,43 @@
-import activityLog from "../models/activityLog.js";
+import ActivityLog from "../models/activityLog.js";
 
+// ==========================================
+// 1. GET ALL (Safe & Simple)
+// ==========================================
 export const getActivityLogs = async (req, res) => {
-    try {
-        const activityLogs = await activityLog.find();
-        res.status(200).json(activityLogs);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching activity logs", error });
-    }
+  try {
+    const activityLogs = await ActivityLog.find().sort({ name: 1 });
+    res.status(200).json(activityLogs);
+  } catch (error) {
+    console.error("Error fetching activity logs:", error);
+    res.status(500).json({ error: "Failed to fetch activity logs" });
+  }
 };
 
+// ==========================================
+// 2. CREATE NEW MANUAL LOG ENTRY (Handles Validation)
+// ==========================================
 export const createActivityLog = async (req, res) => {
-    try {
-        const { activityId, duration, date } = req.body;
-        const newActivityLog = new activityLog({ activityId, duration, date });
-        await newActivityLog.save();
-        res.status(201).json(newActivityLog);
-    } catch (error) {
-        res.status(500).json({ message: "Error creating activity log", error });
+  try {
+    const {activityid, startTime, endTime} = req.body;
+    if (!activityid || !startTime || !endTime) {
+      return res.status(400).json({
+        error: "Missing required fields"
+    });
     }
-};
 
-export const deleteActivityLog = async (req, res) => {
-    try {
-        const { id } = req.params;
-        await activityLog.findByIdAndDelete(id);
-        res.status(200).json({ message: "Activity log deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: "Error deleting activity log", error });
-    }
-};
-
-export const updateActivityLog = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { activityId, duration, date } = req.body;
-        const updatedActivityLog = await activityLog.findByIdAndUpdate(
-            id,
-            { activityId, duration, date },
-            { new: true }
-        );
-        res.status(200).json(updatedActivityLog);
-    } catch (error) {
-        res.status(500).json({ message: "Error updating activity log", error });
-    }
+    const newActivityLog = new ActivityLog({
+        activityId: activityid,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        lastHeartbeat: new Date(),
+        entryType,
+        status: "completed",
+        duration: (new Date(endTime) - new Date(startTime)) / 1000, // duration in seconds
+    });
+    const savedActivityLog = await newActivityLog.save();
+    res.status(201).json(savedActivityLog);
+  } catch (error) {
+    console.error("Error creating activity log:", error);
+    res.status(500).json({ error: "Failed to create activity log" });
+  }
 };

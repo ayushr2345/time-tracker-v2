@@ -8,6 +8,19 @@ import "react-toastify/dist/ReactToastify.css";
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [name, setName] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("#6366f1");
+
+  const presetColors = [
+    { name: "Blue", value: "#3b82f6" },
+    { name: "Purple", value: "#8b5cf6" },
+    { name: "Pink", value: "#ec4899" },
+    { name: "Emerald", value: "#10b981" },
+    { name: "Amber", value: "#f59e0b" },
+    { name: "Cyan", value: "#06b6d4" },
+    { name: "Orange", value: "#f97316" },
+    { name: "Violet", value: "#a855f7" },
+  ];
 
   const fetchActivities = useCallback(async () => {
     setLoading(true);
@@ -77,7 +90,18 @@ export const useActivities = () => {
     fetchActivities();
   }, [fetchActivities]);
 
-  return { activities, loading, refetch: fetchActivities, addActivity, deleteActivity };
+  return {
+    activities,
+    loading,
+    refetch: fetchActivities,
+    name,
+    setName,
+    selectedColor,
+    setSelectedColor,
+    presetColors,
+    addActivity,
+    deleteActivity,
+  };
 };
 
 // TODO: add frontend and supporting backend to update activity name

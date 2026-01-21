@@ -1,163 +1,48 @@
-import React, { useState } from "react";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-import type { Activity } from "../types/activity";
-import { getInitialActivities } from "../data/fixtures";
+import { useManualEntryMode } from "../hooks/useManualEntryMode";
+import { useConfirm } from "../hooks/useConfirmToast";
 
 function ManualEntryMode() {
-  const [activities] = useState<Activity[]>(getInitialActivities());
-  const [selectedActivityId, setSelectedActivityId] = useState<string>("");
-  const [selectedDay, setSelectedDay] = useState<string>("today");
-
-  const handleChangeDay = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedDay(e.target.value);
-  };
-
-  const handleChangeActivity = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedActivityId(e.target.value);
-  };
-
-  const showConfirmAddEntry = (act: Activity, hours: number) => {
-    const ConfirmAddEntry: React.FC<{
-      act: { _id: string; name: string; color: string };
-      onConfirm: () => void;
-      onCancel: () => void;
-    }> = ({ act, onConfirm, onCancel }) => {
-      return (
-        <div className="confirm-toast max-w-md w-full p-3">
-          <div className="mb-2 text-white font-semibold">
-            Log "{hours} hours" to "{act.name}" for "{selectedDay}"?
-          </div>
-          <div className="flex items-center gap-2 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-3 py-2 rounded-lg bg-red-500 text-white font-bold"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => onConfirm()}
-              className="px-3 py-2 rounded-lg bg-green-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      );
-    };
-
-    let toastId: string | number | undefined;
-    toastId = toast(
-      <ConfirmAddEntry
-        act={act}
-        onConfirm={() => {
-          toast.dismiss(toastId);
-          toast.success(
-            `Saved manual entry for "${
-              activities.find((a) => a._id === selectedActivityId)!.name
-            }"`
-          );
-        }}
-        onCancel={() => {
-          toast.dismiss(toastId);
-        }}
-      />,
-      {
-        autoClose: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        closeButton: false,
-        draggable: false,
-      }
-    );
-  };
+  const {
+    activities,
+    loading,
+    selectedActivityId,
+    selectedDay,
+    setStartTime,
+    setEndTime,
+    handleChangeActivity,
+    handleChangeDay,
+    validateInputs,
+  } = useManualEntryMode();
+  const { confirm } = useConfirm();
 
   const handleSubmit = () => {
-    if (!selectedActivityId) {
-      toast.error("Please select an activity to save the manual entry");
-      return;
-    }
-    const startTimeInput = document.getElementById(
-      "startTime"
-    ) as HTMLInputElement | null;
-    const endTimeInput = document.getElementById(
-      "endTime"
-    ) as HTMLInputElement | null;
+    if (!validateInputs()) return;
 
-    if (startTimeInput && endTimeInput) {
-      const startTime = startTimeInput.value;
-      const endTime = endTimeInput.value;
-      // check these values are valid
-      if (!startTime || !endTime) {
-        toast.error("Please enter both start time and end time");
-        return;
-      }
-      // Validations
-      // Check if the start time is before end time
-      const startTimeDate = new Date();
-      startTimeDate.setHours(parseInt(startTime.split(":")[0], 10));
-      startTimeDate.setMinutes(parseInt(startTime.split(":")[1], 10));
+    // Calculate duration to check if it exceeds 12 hours
+    // based on duration, show confirm toast with different message and type
+    // TODO: refactor this code to avoid duplication with validateInputs
+    // TODO: backend validation for same checks
+    // TODO making service and api for manual entry addition
 
-      const endTimeDate = new Date();
-      endTimeDate.setHours(parseInt(endTime.split(":")[0], 10));
-      endTimeDate.setMinutes(parseInt(endTime.split(":")[1], 10));
-
-      // Adjust for yesterday if selected
-      if (selectedDay === "yesterday") {
-        startTimeDate.setDate(startTimeDate.getDate() - 1);
-        endTimeDate.setDate(endTimeDate.getDate() - 1);
-      }
-
-      // Check for future times and logical correctness
-      if (startTimeDate > new Date()) {
-        toast.error("Start time cannot be in the future");
-        return;
-      }
-      if (endTimeDate > new Date()) {
-        toast.error("End time cannot be in the future");
-        return;
-      }
-      if (startTimeDate >= endTimeDate) {
-        toast.error("End time must be after start time");
-        return;
-      }
-
-      const fiveMinutes = 5 * 60 * 1000;
-      const twelveHours = 12 * 60 * 60 * 1000;
-      const twentyFourHours = 24 * 60 * 60 * 1000;
-
-      // Check for minimum duration of 5 minutes
-      if (endTimeDate.getTime() - startTimeDate.getTime() <= fiveMinutes) {
-        toast.error("At least 5 minutes of activity duration is required");
-        return;
-      }
-      // Check for maximum duration of 12 hours
-      if (endTimeDate.getTime() - startTimeDate.getTime() > twelveHours) {
-        toast.warn(
-          "Activity duration exceeds 12 hours. Please ensure this is correct."
+    confirm({
+      title: `Confirm Manual Entry for ${activities.find((a) => a._id === selectedActivityId)?.name}`,
+      message: `The duration you entered is  hours, which exceeds the recommended maximum of 12 hours. Are you sure you want to add this entry to "${activities.find((a) => a._id === selectedActivityId)?.name}"?`,
+      type: "WARNING",
+      confirmText: "Yes, Add Entry",
+      onConfirm: () => {
+        toast.success(
+          `Saved manual entry for "${
+            activities.find((a) => a._id === selectedActivityId)!.name
+          }"`,
         );
-        const duration = endTimeDate.getTime() - startTimeDate.getTime();
-        const durationHours =
-          Math.round((duration / (1000 * 60 * 60)) * 100) / 100;
-        showConfirmAddEntry(
-          activities.find((a) => a._id === selectedActivityId)!,
-          durationHours
-        );
-        return;
-      }
-      // Check for absolute maximum duration of 24 hours
-      if (endTimeDate.getTime() - startTimeDate.getTime() > twentyFourHours) {
-        toast.error("Activity duration cannot exceed 24 hours");
-        return;
-      }
-    }
-    toast.success(
-      `Saved manual entry for "${
-        activities.find((a) => a._id === selectedActivityId)!.name
-      }"`
-    );
+      },
+      onCancel: () => {},
+    });
   };
+
+  if (loading && activities.length === 0) return <div>Loading...</div>;
 
   return (
     <div className="flex flex-col gap-6 mt-6 max-w-3xl mx-auto">
@@ -179,7 +64,6 @@ function ManualEntryMode() {
           <span>Select Activity</span>
         </h3>
         <select
-          id="timerActivity"
           value={selectedActivityId}
           onChange={handleChangeActivity}
           className="w-full px-5 py-4 rounded-xl glass text-white border border-white/20 bg-white/5 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 hover:border-white/40 hover:bg-white/5 font-medium appearance-none cursor-pointer"
@@ -209,7 +93,6 @@ function ManualEntryMode() {
           <span>Day</span>
         </label>
         <select
-          id="day"
           value={selectedDay}
           onChange={handleChangeDay}
           className="w-full px-5 py-4 rounded-xl glass text-white border border-white/20 bg-white/5 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 hover:border-white/40 hover:bg-white/5 font-medium appearance-none cursor-pointer"
@@ -222,16 +105,16 @@ function ManualEntryMode() {
       {/* Time Inputs Side by Side */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div className="flex flex-col gap-4">
-          <label
-            htmlFor="startTime"
-            className="text-base font-bold text-white flex items-center gap-3"
-          >
+          <label className="text-base font-bold text-white flex items-center gap-3">
             <span className="text-xl">⏰</span>
             <span>Start Time</span>
           </label>
           <input
-            id="startTime"
             type="time"
+            placeholder="09:00"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setStartTime(e.target.value)
+            }
             className="w-full px-5 py-4 rounded-xl glass text-white border border-white/20 bg-white/5 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 hover:border-white/40 hover:bg-white/5 font-medium"
           />
         </div>
@@ -245,8 +128,11 @@ function ManualEntryMode() {
             <span>End Time</span>
           </label>
           <input
-            id="endTime"
-            type="time"
+            type="text"
+            placeholder="17:00"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEndTime(e.target.value)
+            }
             className="w-full px-5 py-4 rounded-xl glass text-white border border-white/20 bg-white/5 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 hover:border-white/40 hover:bg-white/5 font-medium"
           />
         </div>
