@@ -47,9 +47,37 @@ export const useActivities = () => {
     }
   };
 
+  const deleteActivity = async (activityId: string) => {
+    try {
+      await activityService.deleteActivity(activityId);
+      setActivities((prev) => prev.filter((act) => act._id !== activityId));
+      toast.success("Activity deleted successfully.");
+      return true;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const statusCode = error.response?.status;
+        if (statusCode === 404) {
+          toast.error("Activity not found or already deleted.");
+        } else if (statusCode === 500) {
+          toast.error("Error deleting activity on server.");
+        } else {
+          toast.error(
+            `Failed to delete activity: ${error.response?.data?.message || error.message}`,
+          );
+        }
+      } else {
+        toast.error(`Failed to delete activity: ${error}`);
+      }
+      console.log("Error deleting activity:", error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
 
-  return { activities, loading, refetch: fetchActivities, addActivity };
+  return { activities, loading, refetch: fetchActivities, addActivity, deleteActivity };
 };
+
+// TODO: add frontend and supporting backend to update activity name

@@ -1,79 +1,30 @@
-import { useEffect, useState } from "react";
-import { AxiosError } from "axios";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import type { Activity } from "../types/activity";
 import { useActivities } from "../hooks/useActivities";
+import { useConfirm } from "../hooks/useConfirmToast";
 
 function Activities() {
-  const{ activities, loading, addActivity } = useActivities();
-
-  const showDeleteConfirm = (act: Activity) => {
-    const ConfirmDeleteToast: React.FC<{
-      act: { _id: string; name: string; color: string };
-      onConfirm: () => void;
-      onCancel: () => void;
-    }> = ({ act, onConfirm, onCancel }) => {
-      const [value, setValue] = useState("");
-      return (
-        <div className="confirm-toast max-w-md w-full p-3">
-          <div className="mb-2 text-white font-semibold">
-            Delete "{act.name}"?
-          </div>
-          <div className="mb-3 text-gray-300 text-sm">
-            Type the activity name to confirm.
-          </div>
-          <input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder={`Type ${act.name} to confirm`}
-            className="w-full px-3 py-2 rounded-md bg-white/6 text-white placeholder-gray-400 mb-3 border border-white/10"
-          />
-          <div className="flex items-center gap-2 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-3 py-2 rounded-lg bg-white/10 text-white font-bold"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => onConfirm()}
-              disabled={value !== act.name}
-              className="px-3 py-2 rounded-lg bg-red-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      );
-    };
-
-    let toastId: string | number | undefined;
-    toastId = toast(
-      <ConfirmDeleteToast
-        act={act}
-        onConfirm={() => {
-          // setActivities((prev) => prev.filter((a) => a._id !== act._id));
-          toast.dismiss(toastId);
-          toast.success(`Deleted "${act.name}"`);
-        }}
-        onCancel={() => {
-          toast.dismiss(toastId);
-        }}
-      />,
-      {
-        autoClose: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        closeButton: false,
-        draggable: false,
-      },
-    );
-  };
+  const{ activities, loading, addActivity, deleteActivity } = useActivities();
+  const { confirm } = useConfirm();
 
   const handleSubmit = async (newActivity: Omit<Activity, "_id">) => {
     await addActivity(newActivity);
+  };
+
+  const handleDelete = (act: Activity) => {
+    confirm({
+      title: `Delete "${act.name}"?`,
+      message: "This action cannot be undone. Type the activity name to confirm.",
+      type: "DANGER",
+      requireInput: true,
+      matchText: act.name,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        await deleteActivity(act._id);
+      },
+      onCancel: () => {}
+    });
   };
 
   if (loading && activities.length === 0) return <div>Loading...</div>;
@@ -357,7 +308,7 @@ function Activities() {
                     </span>
                   </span>
                   <button
-                    onClick={() => showDeleteConfirm(act)}
+                    onClick={() => handleDelete(act)}
                     className="ml-4 px-5 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-all duration-300 font-bold text-sm flex items-center gap-2 hover:scale-105 active:scale-95"
                   >
                     <span className="text-lg">❌</span>
@@ -387,6 +338,3 @@ function Activities() {
 }
 
 export default Activities;
-
-// TODO: need to handle add more carefully, and handle delete and implement update functionality in frontend and connect to backend
-// TODO: extract toast into generic UI component and make a hook for it and use it across the app
