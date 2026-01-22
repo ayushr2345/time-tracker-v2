@@ -8,6 +8,7 @@ export const activityService = {
     );
     return response.data;
   },
+
   createActivity: async (data: Omit<Activity, "_id">): Promise<Activity> => {
     const response = await apiClient.post<Activity>(
       "/activities/createActivity",
@@ -15,6 +16,7 @@ export const activityService = {
     );
     return response.data;
   },
+
   updateActivity: async (
     activityId: string,
     updatedData: Partial<Activity>,
@@ -25,6 +27,7 @@ export const activityService = {
     );
     return response.data;
   },
+
   deleteActivity: async (activityId: string): Promise<{ message: string }> => {
     const response = await apiClient.delete<{ message: string }>(
       `/activities/deleteActivity/${activityId}`,
@@ -32,6 +35,3 @@ export const activityService = {
     return response.data;
   },
 };
-
-// TODO: make it more robust with better error handling and possibly retries
-// TODO: make it as a service

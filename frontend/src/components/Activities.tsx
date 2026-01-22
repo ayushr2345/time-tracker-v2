@@ -1,8 +1,6 @@
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import type { Activity } from "../types/activity";
-import { useActivities } from "../hooks/useActivities";
-import { useConfirm } from "../hooks/useConfirmToast";
+import { useActivitiesForm } from "../hooks/logic/useActivitiesForm";
 import type React from "react";
 
 function Activities() {
@@ -14,33 +12,9 @@ function Activities() {
     selectedColor,
     setSelectedColor,
     presetColors,
-    addActivity,
-    deleteActivity,
-  } = useActivities();
-
-  const { confirm } = useConfirm();
-
-  const handleSubmit = async (newActivity: Omit<Activity, "_id">) => {
-    await addActivity(newActivity);
-    setName("");
-    setSelectedColor("#6366f1");
-  };
-
-  const handleDelete = (act: Activity) => {
-    confirm({
-      title: `Delete "${act.name}"?`,
-      message:
-        "This action cannot be undone. Type the activity name to confirm.",
-      type: "DANGER",
-      requireInput: true,
-      matchText: act.name,
-      confirmText: "Delete",
-      onConfirm: async () => {
-        await deleteActivity(act._id);
-      },
-      onCancel: () => {},
-    });
-  };
+    handleCreateActivity,
+    handleDeleteActivity,
+  } = useActivitiesForm();
 
   if (loading && activities.length === 0) return <div>Loading...</div>;
 
@@ -100,9 +74,7 @@ function Activities() {
                 </div>
                 {/* Custom Color Picker */}
                 <div className="flex items-center gap-3">
-                  <label
-                    className="text-sm text-gray-300 font-medium whitespace-nowrap"
-                  >
+                  <label className="text-sm text-gray-300 font-medium whitespace-nowrap">
                     Custom:
                   </label>
                   <div className="relative">
@@ -114,7 +86,7 @@ function Activities() {
                         setSelectedColor(e.target.value);
                       }}
                     />
-                      🎨
+                    🎨
                   </div>
                 </div>
               </div>
@@ -125,7 +97,6 @@ function Activities() {
                 </span>
                 <div
                   id="colorPreview"
-
                   className="w-8 h-8 rounded-full border-2 border-white/30 shadow-lg transition-all"
                   style={{
                     backgroundColor: selectedColor,
@@ -147,7 +118,7 @@ function Activities() {
                   toast.error("Activity name cannot be empty.");
                   return;
                 }
-                handleSubmit({ name: name.trim(), color: selectedColor });
+                handleCreateActivity();
               }}
               className="bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap flex items-center justify-center gap-3"
             >
@@ -214,7 +185,7 @@ function Activities() {
                     </span>
                   </span>
                   <button
-                    onClick={() => handleDelete(act)}
+                    onClick={() => handleDeleteActivity(act)}
                     className="ml-4 px-5 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-all duration-300 font-bold text-sm flex items-center gap-2 hover:scale-105 active:scale-95"
                   >
                     <span className="text-lg">❌</span>

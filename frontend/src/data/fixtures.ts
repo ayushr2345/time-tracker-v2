@@ -37,18 +37,18 @@ export const DEFAULT_RECORDS: ActivityLogEntry[] = (() => {
   activityIds.forEach((actId) => {
     for (let i = 0; i < 10; i++) {
       // 1. TIMING STRATEGY
-      const daysAgo = i * 5; 
+      const daysAgo = i * 5;
       const startTime = getRelativeDate(daysAgo);
-      
+
       // Fix time to 2:00 PM for consistency
       startTime.setHours(14, 0, 0, 0);
 
       // 2. WORK DURATION STRATEGY (Actual working time)
-      let workDurationMins = 60; 
-      if (actId === "1") workDurationMins = 120 + (i * 5); // Coding: ~2 hrs
-      if (actId === "2") workDurationMins = 45 + (i * 2);  // Gym: ~45 mins
-      if (actId === "3") workDurationMins = 90;            // Reading: 1.5 hrs
-      if (actId === "4") workDurationMins = 180 - (i * 10);// Riding: ~3 hrs
+      let workDurationMins = 60;
+      if (actId === "1") workDurationMins = 120 + i * 5; // Coding: ~2 hrs
+      if (actId === "2") workDurationMins = 45 + i * 2; // Gym: ~45 mins
+      if (actId === "3") workDurationMins = 90; // Reading: 1.5 hrs
+      if (actId === "4") workDurationMins = 180 - i * 10; // Riding: ~3 hrs
 
       workDurationMins = Math.max(30, Math.min(180, workDurationMins));
 
@@ -65,7 +65,7 @@ export const DEFAULT_RECORDS: ActivityLogEntry[] = (() => {
         // Create a 15 min pause happening 30 mins after start
         const pauseStart = addMinutes(startTime, 30);
         const pauseEnd = addMinutes(pauseStart, 15);
-        
+
         pauseHistory.push({ pauseStart, pauseEnd });
         totalPauseMins = 15;
       }
@@ -83,7 +83,7 @@ export const DEFAULT_RECORDS: ActivityLogEntry[] = (() => {
         lastHeartbeatAt: endTime, // For completed logs, heartbeat stops at end
         entrytype: entrytype,
         status: "completed", // Historical data is always completed
-        pauseHistory: pauseHistory.length > 0 ? pauseHistory : undefined
+        pauseHistory: pauseHistory.length > 0 ? pauseHistory : undefined,
       });
     }
   });

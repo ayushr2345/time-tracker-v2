@@ -1,12 +1,12 @@
 import express from "express";
 import {
   getActivityLogs,
-  createActivityLog,
+  createManualLogEntry,
 } from "../controllers/activityLogController.js";
 
 const router = express.Router();
 
-router.post("/", createActivityLog);
-router.get("/", getActivityLogs);
+router.post("/createManualEntryLog", createManualLogEntry);
+router.get("/getActivityLogs", getActivityLogs);
 
 export default router;

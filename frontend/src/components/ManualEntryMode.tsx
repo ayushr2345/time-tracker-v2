@@ -1,46 +1,19 @@
-import { ToastContainer, toast, Slide } from "react-toastify";
+import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useManualEntryMode } from "../hooks/useManualEntryMode";
-import { useConfirm } from "../hooks/useConfirmToast";
+import { useManualEntryMode } from "../hooks/logic/useManualEntryMode";
 
 function ManualEntryMode() {
   const {
     activities,
     loading,
     selectedActivityId,
+    handleChangeActivity,
     selectedDay,
+    handleChangeDay,
     setStartTime,
     setEndTime,
-    handleChangeActivity,
-    handleChangeDay,
-    validateInputs,
+    handleSubmitManualEntry,
   } = useManualEntryMode();
-  const { confirm } = useConfirm();
-
-  const handleSubmit = () => {
-    if (!validateInputs()) return;
-
-    // Calculate duration to check if it exceeds 12 hours
-    // based on duration, show confirm toast with different message and type
-    // TODO: refactor this code to avoid duplication with validateInputs
-    // TODO: backend validation for same checks
-    // TODO making service and api for manual entry addition
-
-    confirm({
-      title: `Confirm Manual Entry for ${activities.find((a) => a._id === selectedActivityId)?.name}`,
-      message: `The duration you entered is  hours, which exceeds the recommended maximum of 12 hours. Are you sure you want to add this entry to "${activities.find((a) => a._id === selectedActivityId)?.name}"?`,
-      type: "WARNING",
-      confirmText: "Yes, Add Entry",
-      onConfirm: () => {
-        toast.success(
-          `Saved manual entry for "${
-            activities.find((a) => a._id === selectedActivityId)!.name
-          }"`,
-        );
-      },
-      onCancel: () => {},
-    });
-  };
 
   if (loading && activities.length === 0) return <div>Loading...</div>;
 
@@ -128,7 +101,7 @@ function ManualEntryMode() {
             <span>End Time</span>
           </label>
           <input
-            type="text"
+            type="time"
             placeholder="17:00"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEndTime(e.target.value)
@@ -141,7 +114,7 @@ function ManualEntryMode() {
       {/* Submit Button */}
       <div className="space-y-4">
         <button
-          onClick={handleSubmit}
+          onClick={handleSubmitManualEntry}
           className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
         >
           <span className="text-2xl">➕</span>

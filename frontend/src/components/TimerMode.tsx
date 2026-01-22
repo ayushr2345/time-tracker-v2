@@ -66,7 +66,7 @@ function TimerMode() {
           toast.success(
             `Saved "${
               activities.find((a) => a._id === selectedActivityId)!.name
-            }" — ${duration}`
+            }" — ${duration}`,
           );
 
           setIsRunning(false);
@@ -100,7 +100,7 @@ function TimerMode() {
         pauseOnHover: true,
         closeButton: false,
         draggable: false,
-      }
+      },
     );
   };
 
@@ -140,7 +140,7 @@ function TimerMode() {
         onConfirm={() => {
           toast.dismiss(toastId);
           toast.success(
-            `Reset "${activities.find((a) => a._id === selectedActivityId)!.name}" timer.`
+            `Reset "${activities.find((a) => a._id === selectedActivityId)!.name}" timer.`,
           );
 
           setIsRunning(false);
@@ -174,7 +174,7 @@ function TimerMode() {
         pauseOnHover: true,
         closeButton: false,
         draggable: false,
-      }
+      },
     );
   };
 
@@ -189,7 +189,7 @@ function TimerMode() {
     setIsPaused(false);
     setElapsed(0);
     toast.success(
-      `Started "${activities.find((a) => a._id === selectedActivityId)!.name}"`
+      `Started "${activities.find((a) => a._id === selectedActivityId)!.name}"`,
     );
     intervalRef.current = window.setInterval(() => {
       setElapsed((prev) => prev + 1);
@@ -213,7 +213,7 @@ function TimerMode() {
     setIsPaused(true);
     showConfirmAddEntry(
       activities.find((a) => a._id === selectedActivityId)!,
-      formatTime(duration)
+      formatTime(duration),
     );
   };
 
@@ -243,9 +243,9 @@ function TimerMode() {
     }
     showConfirmResetEntry(
       activities.find((a) => a._id === selectedActivityId)!,
-      formatTime(elapsed)
+      formatTime(elapsed),
     );
-    
+
     // setIsRunning(false);
     // setElapsed(0);
     // setIsPaused(true);
@@ -335,16 +335,18 @@ function TimerMode() {
             </button>
           ) : null}
           {/* Reset Button - Top Left */}
-          {elapsed > 0 && (
-          <div className="justify-center absolute top-5 left-5">
-            <button
-              onClick={handleResetTimer}
-              disabled={elapsed === 0 && !isRunning}
-              className="bg-gradient-to-r from-purple-500/70 to-pink-500/70 hover:from-purple-600 hover:to-pink-600 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
-            >
-              <span className="text-2xl">🔄</span>
-            </button>
-          </div>) || null}
+          {(elapsed > 0 && (
+            <div className="justify-center absolute top-5 left-5">
+              <button
+                onClick={handleResetTimer}
+                disabled={elapsed === 0 && !isRunning}
+                className="bg-gradient-to-r from-purple-500/70 to-pink-500/70 hover:from-purple-600 hover:to-pink-600 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+              >
+                <span className="text-2xl">🔄</span>
+              </button>
+            </div>
+          )) ||
+            null}
         </div>
       </div>
 

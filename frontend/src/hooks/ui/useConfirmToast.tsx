@@ -1,20 +1,19 @@
 import { toast } from "react-toastify";
-import type { ConfirmToastType } from "../components/ConfirmToast";
-import { ConfirmToast } from "../components/ConfirmToast";
+import type { ConfirmToastType } from "../../components/ConfirmToast";
+import { ConfirmToast } from "../../components/ConfirmToast";
 
 interface ConfirmOptions {
   title: string;
   message: string;
   type?: ConfirmToastType;
   requireInput?: boolean;
-  matchText?: string;     // Only needed if requireInput is true
+  matchText?: string; // Only needed if requireInput is true
   confirmText?: string;
   onConfirm: () => void;
   onCancel?: () => void;
 }
 
 export const useConfirm = () => {
-  
   const confirm = (options: ConfirmOptions) => {
     let toastId: string | number;
 
@@ -39,8 +38,9 @@ export const useConfirm = () => {
         closeButton: false,
         draggable: false,
         position: "top-center",
-        className: "!bg-gray-900 !p-0 !rounded-lg border border-gray-700 shadow-2xl"
-      }
+        className:
+          "!bg-gray-900 !p-0 !rounded-lg border border-gray-700 shadow-2xl",
+      },
     );
   };
 

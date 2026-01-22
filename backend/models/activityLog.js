@@ -17,4 +17,6 @@ const activityLogSchema = new mongoose.Schema({
   duration: { type: Number, required: true, default: 0 },
 });
 
+activityLogSchema.index({ startTime: 1, endTime: 1, status: 1 });
+
 export default mongoose.model("ActivityLog", activityLogSchema);

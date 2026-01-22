@@ -31,7 +31,7 @@ import { getInitialActivities, getInitialRecords } from "../data/fixtures";
 
 const sumLogsByPeriod = (
   logs: ActivityLogEntry[],
-  period: "today" | "week" | "month" | "lastMonth" | "year" | "prevYear"
+  period: "today" | "week" | "month" | "lastMonth" | "year" | "prevYear",
 ) => {
   const now = new Date();
 
@@ -53,7 +53,7 @@ const sumLogsByPeriod = (
     23,
     59,
     59,
-    999
+    999,
   );
   const startOfYear = new Date(now.getFullYear(), 0, 1);
 
@@ -102,7 +102,7 @@ function Overview() {
   // Calculate data for charts
   const chartData = activities.map((activity, index) => {
     const logsForActivity = logs.filter(
-      (log) => log.activityId === activity._id
+      (log) => log.activityId === activity._id,
     );
     const total = sumLogsByPeriod(logsForActivity, "week");
     return {
@@ -180,7 +180,7 @@ function Overview() {
               ) : (
                 activities.map((activity) => {
                   const activityLogs = logs.filter(
-                    (log) => log.activityId === activity._id
+                    (log) => log.activityId === activity._id,
                   );
                   const totalTime = sumLogsByPeriod(activityLogs, "week");
                   console.log(activity.name, totalTime);
@@ -492,7 +492,7 @@ function Overview() {
                       .reverse()
                       .map((log) => {
                         const activity = activities.find(
-                          (a) => a._id === log.activityId
+                          (a) => a._id === log.activityId,
                         );
 
                         const today = new Date().toISOString().split("T")[0];

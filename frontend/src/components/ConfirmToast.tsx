@@ -53,7 +53,8 @@ export const ConfirmToast = ({
       {requireInput && (
         <div className="mb-4">
           <p className="text-xs text-gray-400 mb-1">
-            Type "<span className="font-mono text-white">{matchText}</span>" below:
+            Type "<span className="font-mono text-white">{matchText}</span>"
+            below:
           </p>
           <input
             value={value}
