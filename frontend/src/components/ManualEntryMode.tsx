@@ -10,7 +10,9 @@ function ManualEntryMode() {
     handleChangeActivity,
     selectedDay,
     handleChangeDay,
+    startTime,
     setStartTime,
+    endTime,
     setEndTime,
     handleSubmitManualEntry,
   } = useManualEntryMode();
@@ -84,6 +86,7 @@ function ManualEntryMode() {
           </label>
           <input
             type="time"
+            value={startTime}
             placeholder="09:00"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setStartTime(e.target.value)
@@ -102,6 +105,7 @@ function ManualEntryMode() {
           </label>
           <input
             type="time"
+            value={endTime}
             placeholder="17:00"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEndTime(e.target.value)
@@ -141,28 +145,8 @@ function ManualEntryMode() {
 
 export default ManualEntryMode;
 
-// TODO: Backend check to not allow overlapping manual entries for same activity or different activities
-//       // The Schema Definition
-// const LogSchema = new mongoose.Schema({
-//   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//   startTime: { type: Date, required: true },
-//   endTime: { type: Date, required: true },
-//   // ... other fields
-// });
-
-// // 🔥 THE MAGIC LINE (Compound Index)
-// // This sorts data by User first, then by Start Time (descending).
-// LogSchema.index({ userId: 1, startTime: -1 });
-// --- more optimized solution would be to query for overlapping entries only on today and yesterday based on selected day
-
-// TODO: All types of validations need to be done in backend too
-// TODO: Add validation to ensure end time is after start time -- locally in frontend -- done
-// TODO: Add validation to ensure start time or end time is not in the future -- locally in frontend and also in backend to be safe
-// TODO: Add logic to convert time to UTC format and then store
 // TODO: Make inputs field better designed (maybe date-time picker?)
-// TODO: Add ability to select date (not just time) for entries ?? is it needed? -- only a toggle for today or yesterday for now
 // TODO: Add ability to edit/delete manual entries after creation -- a new mode / tab for this feature
-// TODO: Show summary of manual entries added in the current session
 // TODO: Entries per Activity summary for manual entries and timer based entries separately and totally
 // TODO: Add in overview, calendar view of all entries (manual + timer) for past 7 days with ability to hover and see details
 // TODO: Add loading spinners on all tabs

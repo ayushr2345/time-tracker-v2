@@ -70,3 +70,37 @@ export const createManualLogEntry = async (req, res) => {
     res.status(500).json({ error: "Failed to create activity log" });
   }
 };
+
+// ==========================================
+// 3. GET LOGS FOR CUSTOM RANGE
+// ==========================================
+export const getActivityLogsForCustomRange = async (req, res) => {
+  try {
+    // 1. Extract the Range from the Request
+    // The Frontend calculates "Start of Today" and "End of Today" in UTC and sends them here.
+    const { from, to } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({
+        error:
+          "Missing date range. Please provide 'from' and 'to' query parameters.",
+      });
+    }
+
+    // 2. Run the Range Query
+    const logs = await ActivityLog.find({
+      startTime: {
+        $gte: new Date(from), // Greater than or equal to Start Time
+        $lte: new Date(to), // Less than or equal to End Time
+      },
+    })
+      .populate("activityId", "name color") // Optional: Get Activity Name & Color instantly
+      .sort({ startTime: -1 }); // Optional: Show newest logs first
+
+    // 3. Return the result
+    res.status(200).json(logs);
+  } catch (error) {
+    console.error("Error fetching logs:", error);
+    res.status(500).json({ error: "Failed to fetch activity logs." });
+  }
+};

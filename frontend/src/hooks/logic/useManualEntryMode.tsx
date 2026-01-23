@@ -5,6 +5,7 @@ import { useConfirm } from "../ui/useConfirmToast";
 import type { ConfirmToastType } from "../../components/ConfirmToast";
 import { activityLogService } from "../../services";
 import type { CreateManualEntryLog } from "../../services/activityLogService";
+import { AxiosError } from "axios";
 
 export const useManualEntryMode = () => {
   const { activities, loading } = useActivities();
@@ -12,8 +13,8 @@ export const useManualEntryMode = () => {
 
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<string>("today");
-  const [startTime, setStartTime] = useState<string>("09:00");
-  const [endTime, setEndTime] = useState<string>("17:00");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
 
   const handleChangeDay = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDay(e.target.value);
@@ -34,12 +35,16 @@ export const useManualEntryMode = () => {
     }
 
     const startTimeDate = new Date();
+    console.log("starttime", startTime);
+    console.log(endTime);
     startTimeDate.setHours(parseInt(startTime.split(":")[0], 10));
     startTimeDate.setMinutes(parseInt(startTime.split(":")[1], 10));
+    startTimeDate.setSeconds(0, 0);
 
     const endTimeDate = new Date();
     endTimeDate.setHours(parseInt(endTime.split(":")[0], 10));
     endTimeDate.setMinutes(parseInt(endTime.split(":")[1], 10));
+    endTimeDate.setSeconds(0, 0);
 
     if (selectedDay === "yesterday") {
       startTimeDate.setDate(startTimeDate.getDate() - 1);
@@ -65,7 +70,7 @@ export const useManualEntryMode = () => {
     const twentyFourHours = 24 * 60 * 60 * 1000;
 
     const duration = endTimeDate.getTime() - startTimeDate.getTime();
-    var message = `The duration you entered is ${duration/ (1000 * 60)} mins. Are you sure you want to add this entry to "${activities.find((a) => a._id == selectedActivityId)?.name}"?`;
+    var message = `The duration you entered is ${duration / (1000 * 60)} mins. Are you sure you want to add this entry to "${activities.find((a) => a._id == selectedActivityId)?.name}"?`;
     var toastType: ConfirmToastType = "INFO";
     if (duration < fiveMinutes) {
       toast.error("At least 5 minutes of activity duration is required.");
@@ -95,8 +100,7 @@ export const useManualEntryMode = () => {
         startTime: startTimeDate,
         endTime: endTimeDate,
       };
-      const savedActivity =
-        await activityLogService.createManualEntryLog(payload);
+      await activityLogService.createManualEntryLog(payload);
       toast.success(
         `Saved manual entry for "${
           activities.find((a) => a._id === selectedActivityId)!.name
@@ -104,21 +108,31 @@ export const useManualEntryMode = () => {
       );
       return true;
     } catch (error) {
-      // if (error instanceof AxiosError) {
-      //   const statusCode = error.response?.status;
-      //   if (statusCode === 400) {
-      //     toast.error("Invalid activity data provided.");
-      //   } else if (statusCode === 409) {
-      //     toast.error("An activity with this name already exists.");
-      //   } else {
-      //     toast.error(
-      //       `Failed to create activity: ${error.response?.data?.message || error.message}`,
-      //     );
-      //   }
-      // } else {
-      //   toast.error(`Failed to create activity: ${error}`);
-      // }
-      console.log("Error creating activity:", error);
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        const backendErrorMessage =
+          error.response?.data?.error || "An error occurred";
+
+        switch (status) {
+          case 400:
+            toast.error(backendErrorMessage);
+            break;
+
+          case 404:
+            toast.error("Activity not found. It may have been deleted.");
+            break;
+
+          case 500:
+            toast.error("Server error. Please try again later.");
+            break;
+
+          default:
+            toast.error(`Error: ${backendErrorMessage}`);
+        }
+      } else {
+        toast.error("An unexpected error occurred.");
+        console.error("Manual Entry Error:", error);
+      }
       return false;
     }
   };
@@ -139,8 +153,8 @@ export const useManualEntryMode = () => {
         submitManualEntry(selectedActivityId, startTimeDate, endTimeDate);
         setSelectedActivityId("");
         setSelectedDay("today");
-        setEndTime("17:00");
-        setStartTime("17:00");
+        setEndTime("");
+        setStartTime("");
       },
       onCancel: () => {},
     });
@@ -153,11 +167,10 @@ export const useManualEntryMode = () => {
     handleChangeActivity,
     selectedDay,
     handleChangeDay,
+    startTime,
     setStartTime,
+    endTime,
     setEndTime,
     handleSubmitManualEntry,
   };
 };
-
-// frontend to backend time zone not in sync, need to check
-// TODO: Complete Manual Entry frontend to backend submission with AxiosErrors and status code checks
