@@ -10,7 +10,7 @@ interface ConfirmOptions {
   matchText?: string; // Only needed if requireInput is true
   confirmText?: string;
   onConfirm: () => void;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
 export const useConfirm = () => {
@@ -23,6 +23,7 @@ export const useConfirm = () => {
     };
 
     const handleCancel = () => {
+      options.onCancel();
       toast.dismiss(toastId);
     };
 

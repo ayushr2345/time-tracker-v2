@@ -1,10 +1,15 @@
 import ActivityLog from "../models/activityLog.js";
+import { validateActivityId } from "../utils/commonUtils.js";
 import {
-  validateActivityId,
   validateLookBackWindow,
   validateTimeInputs,
   validateNoOverlaps,
 } from "../utils/manualLogEntryUtils.js";
+import {
+  getActiveTimer,
+  
+  getActivityLog,
+} from "../utils/timerModeEntryUtils.js";
 
 // ==========================================
 // 1. GET ALL (Safe & Simple)
@@ -102,5 +107,292 @@ export const getActivityLogsForCustomRange = async (req, res) => {
   } catch (error) {
     console.error("Error fetching logs:", error);
     res.status(500).json({ error: "Failed to fetch activity logs." });
+  }
+};
+
+// ==========================================
+// 4. START TIMER
+// ==========================================
+export const startTimer = async (req, res) => {
+  try {
+    const { activityId } = req.body;
+    if (!activityId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const isValidActivityId = await validateActivityId(activityId);
+    if (!isValidActivityId) {
+      return res
+        .status(404)
+        .json({ error: "Invalid Activity ID or Activity not found" });
+    }
+
+    const activeTimer = await getActiveTimer();
+    if (activeTimer) {
+      return res.status(409).json({
+        error: "A timer is already running, please stop it first.",
+        activeLog: activeTimer,
+      });
+    }
+
+    const newActivityLog = new ActivityLog({
+      activityId: activityId,
+      createdAt: new Date(),
+      startTime: new Date(),
+      endTime: null,
+      lastHeartbeat: new Date(),
+      entryType: "timer",
+      status: "active",
+      duration: null,
+    });
+    const savedActivityLog = await newActivityLog.save();
+    res.status(201).json(savedActivityLog);
+  } catch (error) {
+    console.error("Error starting timer log:", error);
+    res.status(500).json({ error: "Failed to start timer log" });
+  }
+};
+
+// ==========================================
+// 5. STOP TIMER
+// ==========================================
+export const stopTimer = async (req, res) => {
+  try {
+    const { activityLogId } = req.body;
+    if (!activityLogId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      return res.status(404).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    if (activityLog.entryType !== "timer") {
+      return res.status(400).json({
+        error: "Invalid operation. This is a manual entry, not a live timer.",
+      });
+    }
+
+    if (activityLog.status === "completed") {
+      return res.status(400).json({ error: "Timer is already stopped." });
+    }
+    if (activityLog.status === "paused") {
+      return res
+        .status(400)
+        .json({ error: "Timer is paused, resume the timer before stopping." });
+    }
+
+    const activityEndTime = new Date();
+    const totalPauseDurationInMs = activityLog.pauseHistory.reduce((acc, p) => {
+      if (p.pauseTime && p.resumeTime) {
+        return acc + (new Date(p.resumeTime) - new Date(p.pauseTime));
+      }
+      return acc;
+    }, 0);
+    const totalDurationInSeconds = Math.max(
+      0,
+      Math.round(
+        (activityEndTime - activityLog.startTime - totalPauseDurationInMs) /
+          1000,
+      ),
+    );
+
+    activityLog.endTime = activityEndTime;
+    activityLog.lastHeartbeat = activityEndTime;
+    activityLog.status = "completed";
+    activityLog.duration = totalDurationInSeconds;
+    const savedLog = await activityLog.save();
+    res.status(200).json(savedLog);
+  } catch (error) {
+    console.error("Error stopping timer log:", error);
+    res.status(500).json({ error: "Failed to stop timer log" });
+  }
+};
+
+// ==========================================
+// 6. PAUSE TIMER
+// ==========================================
+export const pauseTimer = async (req, res) => {
+  try {
+    const { activityLogId } = req.body;
+    if (!activityLogId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      return res.status(404).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    if (activityLog.entryType !== "timer") {
+      return res.status(400).json({
+        error: "Invalid operation. This is a manual entry, not a live timer.",
+      });
+    }
+
+    if (activityLog.status === "completed") {
+      return res.status(400).json({ error: "Timer is already stopped." });
+    }
+    if (activityLog.status === "paused") {
+      return res.status(400).json({ error: "Timer is already paused." });
+    }
+
+    const activityPauseTime = new Date();
+
+    activityLog.lastHeartbeat = activityPauseTime;
+    activityLog.status = "paused";
+    activityLog.pauseHistory.push({ pauseTime: activityPauseTime });
+    const savedLog = await activityLog.save();
+    res.status(200).json(savedLog);
+  } catch (error) {
+    console.error("Error pausing timer log:", error);
+    res.status(500).json({ error: "Failed to pause timer log" });
+  }
+};
+
+// ==========================================
+// 7. RESUME TIMER
+// ==========================================
+export const resumeTimer = async (req, res) => {
+  try {
+    const { activityLogId } = req.body;
+    if (!activityLogId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      return res.status(404).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    if (activityLog.entryType !== "timer") {
+      return res.status(400).json({
+        error: "Invalid operation. This is a manual entry, not a live timer.",
+      });
+    }
+
+    if (activityLog.status === "completed") {
+      return res.status(400).json({ error: "Timer is already stopped." });
+    }
+    if (activityLog.status === "active") {
+      return res.status(400).json({ error: "Timer is already active." });
+    }
+    if (activityLog.pauseHistory.length <= 0) {
+      return res.status(404).json({
+        error: "No pause history exists for this activity, cannot resume timer",
+      });
+    }
+
+    const activityResumeTime = new Date();
+
+    activityLog.lastHeartbeat = activityResumeTime;
+    activityLog.status = "active";
+
+    const lastPauseIndex = activityLog.pauseHistory.length - 1;
+    if (lastPauseIndex >= 0) {
+      activityLog.pauseHistory[lastPauseIndex].resumeTime = activityResumeTime;
+    }
+    const savedLog = await activityLog.save();
+    res.status(200).json(savedLog);
+  } catch (error) {
+    console.error("Error resuming timer log:", error);
+    res.status(500).json({ error: "Failed to resume timer log" });
+  }
+};
+
+// ==========================================
+// 8. HEARTBEAT
+// ==========================================
+export const sendHeartbeat = async (req, res) => {
+  try {
+    const { activityLogId } = req.body;
+    if (!activityLogId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      return res.status(404).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    if (activityLog.entryType !== "timer") {
+      return res.status(400).json({
+        error: "Invalid operation. This is a manual entry, not a live timer.",
+      });
+    }
+
+    if (activityLog.status === "completed") {
+      return res.status(400).json({ error: "Timer is already stopped." });
+    }
+
+    const heartbeatTime = new Date();
+
+    activityLog.lastHeartbeat = heartbeatTime;
+    const savedLog = await activityLog.save();
+    res.status(200).json(savedLog);
+  } catch (error) {
+    console.error("Error saving heartbeat.", error);
+    res.status(500).json({ error: "Failed to save heartbeat" });
+  }
+};
+
+// ==========================================
+// 9. RESET TIMER
+// ==========================================
+export const resetTimer = async (req, res) => {
+  try {
+    const { activityLogId } = req.body;
+    if (!activityLogId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      return res.status(404).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    if (activityLog.entryType !== "timer") {
+      return res.status(400).json({
+        error: "Invalid operation. This is a manual entry, not a live timer.",
+      });
+    }
+
+    if (activityLog.status === "completed") {
+      return res.status(400).json({ error: "Timer is already stopped." });
+    }
+    if (activityLog.status === "paused") {
+      return res.status(400).json({
+        error: "Timer is paused, please resume and then reset timer.",
+      });
+    }
+
+    await ActivityLog.findByIdAndDelete(activityLogId);
+    res.status(200).json({ message: "Timer discarded successfully" });
+  } catch (error) {
+    console.error("Error resetting the timer", error);
+    res.status(500).json({ error: "Failed to reset the timer" });
   }
 };

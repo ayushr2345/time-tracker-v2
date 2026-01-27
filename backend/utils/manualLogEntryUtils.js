@@ -1,16 +1,4 @@
-import Activity from "../models/activity.js";
 import ActivityLog from "../models/activityLog.js";
-
-export const validateActivityId = async (activityId) => {
-  try {
-    if (!activityId) return false;
-    const activityExists = await Activity.findById(activityId);
-    if (!activityExists) return false;
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
 
 export const validateLookBackWindow = (startTime) => {
   const start = new Date(startTime);
