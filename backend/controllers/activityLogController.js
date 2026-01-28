@@ -7,7 +7,7 @@ import {
 } from "../utils/manualLogEntryUtils.js";
 import {
   getActiveTimer,
-  
+  validateActivityLogId,
   getActivityLog,
 } from "../utils/timerModeEntryUtils.js";
 
@@ -384,9 +384,11 @@ export const resetTimer = async (req, res) => {
       return res.status(400).json({ error: "Timer is already stopped." });
     }
     if (activityLog.status === "paused") {
-      return res.status(400).json({
-        error: "Timer is paused, please resume and then reset timer.",
-      });
+      return res
+        .status(400)
+        .json({
+          error: "Timer is paused, please resume and then reset timer.",
+        });
     }
 
     await ActivityLog.findByIdAndDelete(activityLogId);
