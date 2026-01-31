@@ -3,6 +3,7 @@ import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useTimerMode } from "../hooks/logic/useTimerMode";
 
+
 function formatTime(seconds: number) {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);

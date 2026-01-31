@@ -1,7 +1,7 @@
 import apiClient from "./apiClient";
 import type { ActivityLogEntry } from "../types/activityLog";
 
-export const activityService = {
+export const activityLogService = {
   getAllActivityLogs: async (): Promise<ActivityLogEntry[]> => {
     const response = await apiClient.get<ActivityLogEntry[]>(
       "/activity-logs/getActivityLogs",
@@ -69,6 +69,14 @@ export const activityService = {
     const response = await apiClient.delete<ActivityLogEntry>(
       "/activity-logs/resetTimer",
       { data: { activityLogId } },
+    );
+    return response.data;
+  },
+
+  resumeCrashedTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
+    const response = await apiClient.put<ActivityLogEntry>(
+      "/activity-logs/resumeCrashedTimer",
+      { activityLogId },
     );
     return response.data;
   },

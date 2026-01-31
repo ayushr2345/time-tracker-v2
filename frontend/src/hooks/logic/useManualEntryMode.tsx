@@ -3,11 +3,10 @@ import { toast } from "react-toastify";
 import { useActivities } from "../data/useActivities";
 import { useConfirm } from "../ui/useConfirmToast";
 import type { ConfirmToastType } from "../../components/ConfirmToast";
-import { activityLogService } from "../../services";
-import type { CreateManualEntryLog } from "../../services/activityLogService";
-import { AxiosError } from "axios";
+import { useActivityLog } from "../data/useActivityLog";
 
 export const useManualEntryMode = () => {
+  const { createManualLogEntry } = useActivityLog();
   const { activities, loading } = useActivities();
   const { confirm } = useConfirm();
 
@@ -89,54 +88,6 @@ export const useManualEntryMode = () => {
     return { startTimeDate, endTimeDate, message, toastType };
   };
 
-  const submitManualEntry = async (
-    selectedActivityId: string,
-    startTimeDate: Date,
-    endTimeDate: Date,
-  ) => {
-    try {
-      const payload: CreateManualEntryLog = {
-        activityId: selectedActivityId,
-        startTime: startTimeDate,
-        endTime: endTimeDate,
-      };
-      await activityLogService.createManualEntryLog(payload);
-      toast.success(
-        `Saved manual entry for "${
-          activities.find((a) => a._id === selectedActivityId)!.name
-        }"`,
-      );
-      return true;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        const status = error.response?.status;
-        const backendErrorMessage =
-          error.response?.data?.error || "An error occurred";
-
-        switch (status) {
-          case 400:
-            toast.error(backendErrorMessage);
-            break;
-
-          case 404:
-            toast.error("Activity not found. It may have been deleted.");
-            break;
-
-          case 500:
-            toast.error("Server error. Please try again later.");
-            break;
-
-          default:
-            toast.error(`Error: ${backendErrorMessage}`);
-        }
-      } else {
-        toast.error("An unexpected error occurred.");
-        console.error("Manual Entry Error:", error);
-      }
-      return false;
-    }
-  };
-
   const handleSubmitManualEntry = () => {
     const data = getParsedData();
     if (!data) return;
@@ -149,12 +100,18 @@ export const useManualEntryMode = () => {
       message: message,
       type: toastType,
       confirmText: "Yes, Add Entry",
-      onConfirm: () => {
-        submitManualEntry(selectedActivityId, startTimeDate, endTimeDate);
-        setSelectedActivityId("");
-        setSelectedDay("today");
-        setEndTime("");
-        setStartTime("");
+      onConfirm: async () => {
+        const success = await createManualLogEntry(
+          selectedActivityId,
+          startTimeDate,
+          endTimeDate,
+        );
+        if (success) {
+          setSelectedActivityId("");
+          setSelectedDay("today");
+          setEndTime("");
+          setStartTime("");
+        }
       },
       onCancel: () => {},
     });

@@ -5,12 +5,12 @@ export type ActivityLogEntry = {
   createdAt: Date;
   startTime: Date;
   endTime: Date;
-  lastHeartbeatAt: Date;
+  lastHeartbeat: Date;
   entrytype: "manual" | "timer";
   status: "active" | "completed" | "paused";
   pauseHistory?: Array<{
-    pauseStart: Date;
-    pauseEnd: Date;
+    pauseTime: Date;
+    resumeTime: Date;
   }>;
   duration?: number; // in seconds
 };
