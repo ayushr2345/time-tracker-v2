@@ -7,7 +7,6 @@ import {
 } from "../utils/manualLogEntryUtils.js";
 import {
   getActiveTimer,
-  validateActivityLogId,
   getActivityLog,
 } from "../utils/timerModeEntryUtils.js";
 
@@ -16,7 +15,7 @@ import {
 // ==========================================
 export const getActivityLogs = async (req, res) => {
   try {
-    const activityLogs = await ActivityLog.find().sort({ name: 1 });
+    const activityLogs = await ActivityLog.find().sort({ startTime: -1 });
     res.status(200).json(activityLogs);
   } catch (error) {
     console.error("Error fetching activity logs:", error);
@@ -383,18 +382,102 @@ export const resetTimer = async (req, res) => {
     if (activityLog.status === "completed") {
       return res.status(400).json({ error: "Timer is already stopped." });
     }
-    if (activityLog.status === "paused") {
-      return res
-        .status(400)
-        .json({
-          error: "Timer is paused, please resume and then reset timer.",
-        });
-    }
 
     await ActivityLog.findByIdAndDelete(activityLogId);
     res.status(200).json({ message: "Timer discarded successfully" });
   } catch (error) {
     console.error("Error resetting the timer", error);
     res.status(500).json({ error: "Failed to reset the timer" });
+  }
+};
+
+// ==========================================
+// 10. RESUME CRASHED TIMER (Heal Gap)
+// ==========================================
+export const resumeCrashedTimer = async (req, res) => {
+  try {
+    const { activityLogId } = req.body;
+    if (!activityLogId) {
+      return res.status(400).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      console.log("Not found");
+      return res.status(404).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    if (activityLog.entryType !== "timer") {
+      return res.status(400).json({
+        error: "Invalid operation. This is a manual entry, not a live timer.",
+      });
+    }
+
+    if (activityLog.status !== "active") {
+      return res.status(200).json(activityLog);
+    }
+
+    const now = new Date();
+    const lastHeartbeat = new Date(activityLog.lastHeartbeat);
+    const gapDuration = now - lastHeartbeat;
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    if (gapDuration > FIVE_MINUTES && gapDuration < TWENTY_FOUR_HOURS) {
+      console.log(
+        `[Recovery] Gap detected: ${Math.floor(gapDuration / 60000)} min. Injecting pause.`,
+      );
+      activityLog.pauseHistory.push({
+        pauseTime: lastHeartbeat,
+        resumeTime: now,
+      });
+
+      activityLog.lastHeartbeat = now;
+
+      const savedLog = await activityLog.save();
+      return res.status(200).json(savedLog);
+    } else if (gapDuration >= TWENTY_FOUR_HOURS) {
+      console.log(
+        `[Recovery] Timer abandoned (>24h). Auto-stopping at last heartbeat.`,
+      );
+
+      const totalPauseDurationInMs = activityLog.pauseHistory.reduce(
+        (acc, p) => {
+          if (p.pauseTime && p.resumeTime) {
+            return acc + (new Date(p.resumeTime) - new Date(p.pauseTime));
+          }
+          return acc;
+        },
+        0,
+      );
+
+      const validDuration = Math.max(
+        0,
+        Math.round(
+          (lastHeartbeat -
+            new Date(activityLog.startTime) -
+            totalPauseDurationInMs) /
+            1000,
+        ),
+      );
+
+      activityLog.endTime = lastHeartbeat;
+      activityLog.status = "completed";
+      activityLog.duration = validDuration;
+
+      const savedLog = await activityLog.save();
+      return res.status(200).json(savedLog);
+    }
+
+    activityLog.lastHeartbeat = now;
+    await activityLog.save();
+    res.status(200).json(activityLog);
+  } catch (error) {
+    console.error("Error resuming crashed timer:", error);
+    res.status(500).json({ error: "Failed to resume crashed timer" });
   }
 };

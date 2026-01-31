@@ -9,6 +9,7 @@ import {
   resumeTimer,
   sendHeartbeat,
   resetTimer,
+  resumeCrashedTimer,
 } from "../controllers/activityLogController.js";
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.put("/pauseTimer", pauseTimer);
 router.put("/resumeTimer", resumeTimer);
 router.put("/sendHeartbeat", sendHeartbeat);
 router.delete("/resetTimer", resetTimer)
+router.put("/resumeCrashedTimer", resumeCrashedTimer)
 
 export default router;
