@@ -301,7 +301,9 @@ export const useTimerMode = () => {
     const FIVE_MINUTES = 5 * 60 * 1000;
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
-    const activityName = activities.find(a => a._id === activeLog.activityId)?.name || "Activity";
+    const activityName =
+      activities.find((a) => a._id === activeLog.activityId)?.name ||
+      "Activity";
     // -------------------------------------------------------
     // SCENARIO 1: > 24 Hours (Auto-Stop)
     // -------------------------------------------------------
@@ -313,7 +315,9 @@ export const useTimerMode = () => {
         // If backend returns 'completed', notify user.
         // The UI will reset on the next render because 'activeLog' won't be found.
         if (processedLog?.status === "completed") {
-          toast.info(`Session expired (>24h) for ${activityName} and was saved automatically.`);
+          toast.info(
+            `Session expired (>24h) for ${activityName} and was saved automatically.`,
+          );
         }
       })();
       return; // Stop execution here
@@ -326,7 +330,7 @@ export const useTimerMode = () => {
       // Stop ticking visually while we ask
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (crashCheckRef.current === activeLog._id) return;
-      
+
       crashCheckRef.current = activeLog._id;
 
       const minutesAway = Math.floor(gapDuration / 60000);

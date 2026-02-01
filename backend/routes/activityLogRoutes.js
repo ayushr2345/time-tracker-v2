@@ -22,7 +22,7 @@ router.put("/stopTimer", stopTimer);
 router.put("/pauseTimer", pauseTimer);
 router.put("/resumeTimer", resumeTimer);
 router.put("/sendHeartbeat", sendHeartbeat);
-router.delete("/resetTimer", resetTimer)
-router.put("/resumeCrashedTimer", resumeCrashedTimer)
+router.delete("/resetTimer", resetTimer);
+router.put("/resumeCrashedTimer", resumeCrashedTimer);
 
 export default router;

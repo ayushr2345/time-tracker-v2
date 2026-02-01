@@ -55,16 +55,21 @@ export const validateNoOverlaps = async (startTime, endTime) => {
 
     const overlapLog = await ActivityLog.findOne({
       status: "completed",
-      $and: [
-        { startTime: { $lt: end } },
-        { endTime: { $gt: start } }
-      ]
+      $and: [{ startTime: { $lt: end } }, { endTime: { $gt: start } }],
     }).populate("activityId", "name");
 
     if (overlapLog) {
-      const activityName = overlapLog.activityId ? overlapLog.activityId.name : "Unknown Activity";
-      const sTime = overlapLog.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const eTime = overlapLog.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const activityName = overlapLog.activityId
+        ? overlapLog.activityId.name
+        : "Unknown Activity";
+      const sTime = overlapLog.startTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const eTime = overlapLog.endTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       return `Time overlap detected with "${activityName}" (${sTime} - ${eTime}).`;
     }
     return null;

@@ -3,7 +3,6 @@ import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useTimerMode } from "../hooks/logic/useTimerMode";
 
-
 function formatTime(seconds: number) {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
@@ -177,5 +176,3 @@ export default TimerMode;
 // TODO: Overnight edge case: Start timer before midnight, stop after midnight - handle correctly
 //       look up where the time spent should go (previous day vs current day) based on greater portion of time spent
 //       or split into two records automatically -- option B is better as it maintains accuracy -- no overflow of time in a single day
-// TODO: Add heartbeat to server for sudden failures/crashes
-// TODO: Add option to continue previous timer if stopped accidentally

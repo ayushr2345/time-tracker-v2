@@ -73,7 +73,9 @@ export const activityLogService = {
     return response.data;
   },
 
-  resumeCrashedTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
+  resumeCrashedTimer: async (
+    activityLogId: string,
+  ): Promise<ActivityLogEntry> => {
     const response = await apiClient.put<ActivityLogEntry>(
       "/activity-logs/resumeCrashedTimer",
       { activityLogId },
