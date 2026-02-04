@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 /**
  * ActivityLog Schema
  * Represents a log entry for an activity tracking session.
- * @typedef {Object} ActivityLog
+ * @typedef  {Object} ActivityLog
  * @property {ObjectId} activityId - Reference to the Activity document (required)
  * @property {Date} createdAt - When the log was created (required, default: current date)
  * @property {Date} startTime - When the activity started (required)

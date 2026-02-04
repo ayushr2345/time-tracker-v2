@@ -4,8 +4,8 @@ import ActivityLog from "../models/activityLog.js";
 /**
  * Validates that the provided start time is within the lookback window (today or yesterday).
  * @function validateLookBackWindow
- * @param {string} startTime - The start time to validate (ISO string)
- * @returns {string|null} Error message if invalid, null if valid
+ * @param    {string} startTime - The start time to validate (ISO string)
+ * @returns  {string|null} Error message if invalid, null if valid
  */
 export const validateLookBackWindow = (startTime) => {
   const start = new Date(startTime);
@@ -25,9 +25,9 @@ export const validateLookBackWindow = (startTime) => {
  * Validates time inputs for activity log entries.
  * Checks that times are valid dates, not in the future, and meet duration constraints.
  * @function validateTimeInputs
- * @param {string} startTime - The activity start time (ISO string)
- * @param {string} endTime - The activity end time (ISO string)
- * @returns {string|null} Error message if invalid, null if valid
+ * @param    {string} startTime - The activity start time (ISO string)
+ * @param    {string} endTime - The activity end time (ISO string)
+ * @returns  {string|null} Error message if invalid, null if valid
  */
 export const validateTimeInputs = (startTime, endTime) => {
   const start = new Date(startTime);
@@ -65,9 +65,9 @@ export const validateTimeInputs = (startTime, endTime) => {
  * Validates that the provided time range does not overlap with existing completed activity logs.
  * @async
  * @function validateNoOverlaps
- * @param {string} startTime - The activity start time (ISO string)
- * @param {string} endTime - The activity end time (ISO string)
- * @returns {Promise<string|null>} Error message if overlap detected, null if valid
+ * @param    {string} startTime - The activity start time (ISO string)
+ * @param    {string} endTime - The activity end time (ISO string)
+ * @returns  {Promise<string|null>} Error message if overlap detected, null if valid
  */
 export const validateNoOverlaps = async (startTime, endTime) => {
   try {

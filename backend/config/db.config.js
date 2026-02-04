@@ -9,7 +9,7 @@ const mongoURI = process.env.MONGO_URI;
  * Logs success or error messages to the console.
  * @async
  * @function connectDB
- * @returns {Promise<void>} Resolves when connection is established or error is caught
+ * @returns  {Promise<void>} Resolves when connection is established or error is caught
  */
 const connectDB = async () => {
   try {

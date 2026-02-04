@@ -5,9 +5,9 @@ import { APP_CONFIG, HTTP_STATUS, MONGO_DB_ERRORS } from "../constants.js";
  * Retrieves all activities from the database, sorted alphabetically by name.
  * @async
  * @function getActivities
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @returns {void} Returns JSON array of all activities or error response
+ * @param    {Object} req - Express request object
+ * @param    {Object} res - Express response object
+ * @returns  {void} Returns JSON array of all activities or error response
  */
 export const getActivities = async (req, res) => {
   try {
