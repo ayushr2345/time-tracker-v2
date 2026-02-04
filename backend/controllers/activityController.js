@@ -1,73 +1,118 @@
 import Activity from "../models/activity.js";
+import { APP_CONFIG, HTTP_STATUS, MONGO_DB_ERRORS } from "../constants.js";
 
-// ==========================================
-// 1. GET ALL (Safe & Simple)
-// ==========================================
+/**
+ * Retrieves all activities from the database, sorted alphabetically by name.
+ * @async
+ * @function getActivities
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {void} Returns JSON array of all activities or error response
+ */
 export const getActivities = async (req, res) => {
   try {
     // Sort by name alphabetically for better UX
     const activities = await Activity.find().sort({ name: 1 });
-    res.status(200).json(activities);
+    res.status(HTTP_STATUS.OK).json(activities);
   } catch (error) {
     console.error("Error fetching activities:", error);
-    res.status(500).json({ error: "Failed to fetch activities" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to fetch activities" });
   }
 };
 
-// ==========================================
-// 2. CREATE (Handles Duplicates & Empty Fields)
-// ==========================================
+/**
+ * Creates a new activity with the provided name and color.
+ * Validates that the activity name is not empty and handles duplicate name errors.
+ * @async
+ * @function createActivity
+ * @param {Object} req - Express request object
+ * @param {string} req.body.name - The activity name (required)
+ * @param {string} req.body.color - The activity color (optional, defaults to "#ffffff")
+ * @param {Object} res - Express response object
+ * @returns {void} Returns created activity JSON or error response
+ */
 export const createActivity = async (req, res) => {
   try {
+    // TODO: Add a check for activity name length
     const { name, color } = req.body;
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: "Activity name is required" });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Activity name is required" });
     }
     const newActivity = new Activity({
       name: name.trim(),
-      color: color || "#ffffff",
+      color: color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
     });
     await newActivity.save();
-    res.status(201).json(newActivity);
+    res.status(HTTP_STATUS.CREATED).json(newActivity);
   } catch (error) {
     // Handle Duplicate Name (Mongo Error 11000)
-    if (error.code === 11000) {
+    if (error.code === MONGO_DB_ERRORS.DUPLICATE_KEY) {
       return res
-        .status(409)
+        .status(HTTP_STATUS.CONFLICT)
         .json({ error: "An activity with this name already exists" });
     }
     console.error("Create Error:", error);
-    res.status(500).json({ error: "Server error while creating activity" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Server error while creating activity" });
   }
 };
 
-// ==========================================
-// 3. DELETE (Handles 'Not Found')
-// ==========================================
+/**
+ * Deletes an activity by its ID.
+ * Returns 404 error if the activity is not found.
+ * @async
+ * @function deleteActivity
+ * @param {Object} req - Express request object
+ * @param {string} req.params.id - The activity ID to delete
+ * @param {Object} res - Express response object
+ * @returns {void} Returns success message or error response
+ */
 export const deleteActivity = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedActivity = await Activity.findByIdAndDelete(id);
     if (!deletedActivity) {
-      return res.status(404).json({ error: "Activity not found" });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "Activity not found" });
     }
-    res.status(200).json({ message: "Activity deleted successfully" });
+    res
+      .status(HTTP_STATUS.OK)
+      .json({ message: "Activity deleted successfully" });
   } catch (error) {
     console.error("Delete Error:", error);
-    res.status(500).json({ error: "Error deleting activity" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Error deleting activity" });
   }
 };
 
-// ==========================================
-// 4. UPDATE (Handles Duplicates & 'Not Found')
-// ==========================================
+/**
+ * Updates an activity's name and/or color by its ID.
+ * Validates that the name is not empty and handles duplicate name errors.
+ * @async
+ * @function updateActivity
+ * @param {Object} req - Express request object
+ * @param {string} req.params.id - The activity ID to update
+ * @param {string} req.body.name - The new activity name (optional)
+ * @param {string} req.body.color - The new activity color (optional)
+ * @param {Object} res - Express response object
+ * @returns {void} Returns updated activity JSON or error response
+ */
 export const updateActivity = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, color } = req.body;
     // Validation: Ensure we aren't saving an empty name
     if (name && !name.trim()) {
-      return res.status(400).json({ error: "Activity name cannot be empty" });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Activity name cannot be empty" });
     }
     const updatedActivity = await Activity.findByIdAndUpdate(
       id,
@@ -76,17 +121,21 @@ export const updateActivity = async (req, res) => {
     );
     // Validation: If ID didn't match anything
     if (!updatedActivity) {
-      return res.status(404).json({ error: "Activity not found" });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "Activity not found" });
     }
-    res.status(200).json(updatedActivity);
+    res.status(HTTP_STATUS.OK).json(updatedActivity);
   } catch (error) {
     // Handle Duplicate (e.g., renaming "Gym" to existing "Coding")
-    if (error.code === 11000) {
+    if (error.code === MONGO_DB_ERRORS.DUPLICATE_KEY) {
       return res
-        .status(409)
+        .status(HTTP_STATUS.CONFLICT)
         .json({ error: "An activity with this name already exists" });
     }
     console.error("Update Error:", error);
-    res.status(500).json({ error: "Error updating activity" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Error updating activity" });
   }
 };

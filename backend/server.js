@@ -1,3 +1,7 @@
+/**
+ * Main Server File
+ * Initializes and configures the Express server with MongoDB connection and API routes.
+ */
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";

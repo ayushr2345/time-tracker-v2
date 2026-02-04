@@ -1,6 +1,10 @@
 import express from "express";
 const router = express.Router();
 
+/**
+ * Activity Routes
+ * Defines RESTful endpoints for managing activities.
+ */
 import {
   getActivities,
   createActivity,

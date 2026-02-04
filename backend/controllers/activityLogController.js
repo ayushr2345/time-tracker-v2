@@ -1,5 +1,8 @@
 import ActivityLog from "../models/activityLog.js";
-import { validateActivityId } from "../utils/commonUtils.js";
+import {
+  validateActivityId,
+  calculateTotalPauseDurationInMs,
+} from "../utils/commonUtils.js";
 import {
   validateLookBackWindow,
   validateTimeInputs,
@@ -10,27 +13,43 @@ import {
   getActivityLog,
 } from "../utils/timerModeEntryUtils.js";
 
-// ==========================================
-// 1. GET ALL (Safe & Simple)
-// ==========================================
+/**
+ * Retrieves all activity logs from the database, sorted by start time (newest first).
+ * @async
+ * @function getActivityLogs
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {void} Returns JSON array of all activity logs or error response
+ */
 export const getActivityLogs = async (req, res) => {
   try {
     const activityLogs = await ActivityLog.find().sort({ startTime: -1 });
-    res.status(200).json(activityLogs);
+    res.status(HTTP_STATUS.OK).json(activityLogs);
   } catch (error) {
     console.error("Error fetching activity logs:", error);
-    res.status(500).json({ error: "Failed to fetch activity logs" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to fetch activity logs" });
   }
 };
 
-// ==========================================
-// 2. CREATE NEW MANUAL LOG ENTRY (Handles Validation)
-// ==========================================
+/**
+ * Creates a new manual activity log entry with provided activity, start, and end times.
+ * Validates activity ID, time inputs, lookback window, and time overlaps.
+ * @async
+ * @function createManualLogEntry
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityId - The activity ID for this log entry
+ * @param {string} req.body.startTime - The start time of the activity
+ * @param {string} req.body.endTime - The end time of the activity
+ * @param {Object} res - Express response object
+ * @returns {void} Returns created activity log JSON or validation error response
+ */
 export const createManualLogEntry = async (req, res) => {
   try {
     const { activityId, startTime, endTime } = req.body;
     if (!activityId || !startTime || !endTime) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required fields",
       });
     }
@@ -38,23 +57,32 @@ export const createManualLogEntry = async (req, res) => {
     const isValidActivityId = await validateActivityId(activityId);
     if (!isValidActivityId) {
       return res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ error: "Invalid Activity ID or Activity not found" });
     }
 
-    const lookBackWindowError = await validateLookBackWindow(startTime);
+    const lookBackWindowError = validateLookBackWindow(startTime);
     if (lookBackWindowError) {
-      return res.status(400).json({ error: lookBackWindowError });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: lookBackWindowError });
     }
 
     const timeValidationError = validateTimeInputs(startTime, endTime);
     if (timeValidationError) {
-      return res.status(400).json({ error: timeValidationError });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: timeValidationError });
     }
 
+    // TODO: Need to check for paused/completed/active logs as well
+    // because current status of timer entries is only updated
+    // when timer mode is selected. To avoid overlap, this is necessary
     const overlappingError = await validateNoOverlaps(startTime, endTime);
     if (overlappingError) {
-      return res.status(400).json({ error: overlappingError });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: overlappingError });
     }
 
     const newActivityLog = new ActivityLog({
@@ -68,16 +96,26 @@ export const createManualLogEntry = async (req, res) => {
       duration: (new Date(endTime) - new Date(startTime)) / 1000, // duration in seconds
     });
     const savedActivityLog = await newActivityLog.save();
-    res.status(201).json(savedActivityLog);
+    res.status(HTTP_STATUS.CREATED).json(savedActivityLog);
   } catch (error) {
     console.error("Error creating activity log:", error);
-    res.status(500).json({ error: "Failed to create activity log" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to create activity log" });
   }
 };
 
-// ==========================================
-// 3. GET LOGS FOR CUSTOM RANGE
-// ==========================================
+/**
+ * Retrieves activity logs for a custom date range.
+ * Returns logs with populated activity details, sorted by start time (newest first).
+ * @async
+ * @function getActivityLogsForCustomRange
+ * @param {Object} req - Express request object
+ * @param {string} req.query.from - Start date (ISO string)
+ * @param {string} req.query.to - End date (ISO string)
+ * @param {Object} res - Express response object
+ * @returns {void} Returns JSON array of activity logs in range or error response
+ */
 export const getActivityLogsForCustomRange = async (req, res) => {
   try {
     // 1. Extract the Range from the Request
@@ -85,7 +123,7 @@ export const getActivityLogsForCustomRange = async (req, res) => {
     const { from, to } = req.query;
 
     if (!from || !to) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error:
           "Missing date range. Please provide 'from' and 'to' query parameters.",
       });
@@ -102,21 +140,30 @@ export const getActivityLogsForCustomRange = async (req, res) => {
       .sort({ startTime: -1 }); // Optional: Show newest logs first
 
     // 3. Return the result
-    res.status(200).json(logs);
+    res.status(HTTP_STATUS.OK).json(logs);
   } catch (error) {
     console.error("Error fetching logs:", error);
-    res.status(500).json({ error: "Failed to fetch activity logs." });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to fetch activity logs." });
   }
 };
 
-// ==========================================
-// 4. START TIMER
-// ==========================================
+/**
+ * Starts a new timer for the specified activity.
+ * Validates that no other timer is currently running.
+ * @async
+ * @function startTimer
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityId - The activity ID to start timer for
+ * @param {Object} res - Express response object
+ * @returns {void} Returns created activity log with "active" status or error response
+ */
 export const startTimer = async (req, res) => {
   try {
     const { activityId } = req.body;
     if (!activityId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
@@ -124,13 +171,13 @@ export const startTimer = async (req, res) => {
     const isValidActivityId = await validateActivityId(activityId);
     if (!isValidActivityId) {
       return res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ error: "Invalid Activity ID or Activity not found" });
     }
 
     const activeTimer = await getActiveTimer();
     if (activeTimer) {
-      return res.status(409).json({
+      return res.status(HTTP_STATUS.CONFLICT).json({
         error: "A timer is already running, please stop it first.",
         activeLog: activeTimer,
       });
@@ -147,54 +194,55 @@ export const startTimer = async (req, res) => {
       duration: null,
     });
     const savedActivityLog = await newActivityLog.save();
-    res.status(201).json(savedActivityLog);
+    res.status(HTTP_STATUS.CREATED).json(savedActivityLog);
   } catch (error) {
     console.error("Error starting timer log:", error);
-    res.status(500).json({ error: "Failed to start timer log" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to start timer log" });
   }
 };
 
-// ==========================================
-// 5. STOP TIMER
-// ==========================================
+/**
+ * Stops a running or paused timer and calculates total duration.
+ * Accounts for pause periods when calculating the total duration.
+ * @async
+ * @function stopTimer
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityLogId - The activity log ID to stop
+ * @param {Object} res - Express response object
+ * @returns {void} Returns stopped activity log with "completed" status or error response
+ */
 export const stopTimer = async (req, res) => {
   try {
     const { activityLogId } = req.body;
     if (!activityLogId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
 
     const activityLog = await getActivityLog(activityLogId);
     if (!activityLog) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "Activity Log not found.",
       });
     }
 
     if (activityLog.entryType !== "timer") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Invalid operation. This is a manual entry, not a live timer.",
       });
     }
 
     if (activityLog.status === "completed") {
-      return res.status(400).json({ error: "Timer is already stopped." });
-    }
-    if (activityLog.status === "paused") {
       return res
-        .status(400)
-        .json({ error: "Timer is paused, resume the timer before stopping." });
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already stopped." });
     }
 
     const activityEndTime = new Date();
-    const totalPauseDurationInMs = activityLog.pauseHistory.reduce((acc, p) => {
-      if (p.pauseTime && p.resumeTime) {
-        return acc + (new Date(p.resumeTime) - new Date(p.pauseTime));
-      }
-      return acc;
-    }, 0);
+    const totalPauseDurationInMs = calculateTotalPauseDurationInMs(activityLog.pauseHistory);
     const totalDurationInSeconds = Math.max(
       0,
       Math.round(
@@ -208,43 +256,55 @@ export const stopTimer = async (req, res) => {
     activityLog.status = "completed";
     activityLog.duration = totalDurationInSeconds;
     const savedLog = await activityLog.save();
-    res.status(200).json(savedLog);
+    res.status(HTTP_STATUS.OK).json(savedLog);
   } catch (error) {
     console.error("Error stopping timer log:", error);
-    res.status(500).json({ error: "Failed to stop timer log" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to stop timer log" });
   }
 };
 
-// ==========================================
-// 6. PAUSE TIMER
-// ==========================================
+/**
+ * Pauses a running timer and records the pause time.
+ * @async
+ * @function pauseTimer
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityLogId - The activity log ID to pause
+ * @param {Object} res - Express response object
+ * @returns {void} Returns paused activity log with "paused" status or error response
+ */
 export const pauseTimer = async (req, res) => {
   try {
     const { activityLogId } = req.body;
     if (!activityLogId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
 
     const activityLog = await getActivityLog(activityLogId);
     if (!activityLog) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "Activity Log not found.",
       });
     }
 
     if (activityLog.entryType !== "timer") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Invalid operation. This is a manual entry, not a live timer.",
       });
     }
 
     if (activityLog.status === "completed") {
-      return res.status(400).json({ error: "Timer is already stopped." });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already stopped." });
     }
     if (activityLog.status === "paused") {
-      return res.status(400).json({ error: "Timer is already paused." });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already paused." });
     }
 
     const activityPauseTime = new Date();
@@ -253,46 +313,58 @@ export const pauseTimer = async (req, res) => {
     activityLog.status = "paused";
     activityLog.pauseHistory.push({ pauseTime: activityPauseTime });
     const savedLog = await activityLog.save();
-    res.status(200).json(savedLog);
+    res.status(HTTP_STATUS.OK).json(savedLog);
   } catch (error) {
     console.error("Error pausing timer log:", error);
-    res.status(500).json({ error: "Failed to pause timer log" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to pause timer log" });
   }
 };
 
-// ==========================================
-// 7. RESUME TIMER
-// ==========================================
+/**
+ * Resumes a paused timer and records the resume time in pause history.
+ * @async
+ * @function resumeTimer
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityLogId - The activity log ID to resume
+ * @param {Object} res - Express response object
+ * @returns {void} Returns resumed activity log with "active" status or error response
+ */
 export const resumeTimer = async (req, res) => {
   try {
     const { activityLogId } = req.body;
     if (!activityLogId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
 
     const activityLog = await getActivityLog(activityLogId);
     if (!activityLog) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "Activity Log not found.",
       });
     }
 
     if (activityLog.entryType !== "timer") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Invalid operation. This is a manual entry, not a live timer.",
       });
     }
 
     if (activityLog.status === "completed") {
-      return res.status(400).json({ error: "Timer is already stopped." });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already stopped." });
     }
     if (activityLog.status === "active") {
-      return res.status(400).json({ error: "Timer is already active." });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already active." });
     }
     if (activityLog.pauseHistory.length <= 0) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "No pause history exists for this activity, cannot resume timer",
       });
     }
@@ -304,101 +376,140 @@ export const resumeTimer = async (req, res) => {
 
     const lastPauseIndex = activityLog.pauseHistory.length - 1;
     if (lastPauseIndex >= 0) {
+      if (activityLog.pauseHistory[lastPauseIndex].resumeTime) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error:
+            "Last paused timer was already resumed, cannot resume an already resumed timer",
+        });
+      }
       activityLog.pauseHistory[lastPauseIndex].resumeTime = activityResumeTime;
     }
     const savedLog = await activityLog.save();
-    res.status(200).json(savedLog);
+    res.status(HTTP_STATUS.OK).json(savedLog);
   } catch (error) {
     console.error("Error resuming timer log:", error);
-    res.status(500).json({ error: "Failed to resume timer log" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to resume timer log" });
   }
 };
 
-// ==========================================
-// 8. HEARTBEAT
-// ==========================================
+/**
+ * Updates the last heartbeat timestamp for an active timer.
+ * Used to detect if a timer has crashed or become disconnected.
+ * @async
+ * @function sendHeartbeat
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityLogId - The activity log ID to send heartbeat for
+ * @param {Object} res - Express response object
+ * @returns {void} Returns updated activity log with new heartbeat time or error response
+ */
 export const sendHeartbeat = async (req, res) => {
   try {
     const { activityLogId } = req.body;
     if (!activityLogId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
 
     const activityLog = await getActivityLog(activityLogId);
     if (!activityLog) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "Activity Log not found.",
       });
     }
 
     if (activityLog.entryType !== "timer") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Invalid operation. This is a manual entry, not a live timer.",
       });
     }
 
     if (activityLog.status === "completed") {
-      return res.status(400).json({ error: "Timer is already stopped." });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already stopped." });
     }
 
     const heartbeatTime = new Date();
 
     activityLog.lastHeartbeat = heartbeatTime;
     const savedLog = await activityLog.save();
-    res.status(200).json(savedLog);
+    res.status(HTTP_STATUS.OK).json(savedLog);
   } catch (error) {
     console.error("Error saving heartbeat.", error);
-    res.status(500).json({ error: "Failed to save heartbeat" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to save heartbeat" });
   }
 };
 
-// ==========================================
-// 9. RESET TIMER
-// ==========================================
+/**
+ * Discards/resets a timer by deleting the associated activity log.
+ * @async
+ * @function resetTimer
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityLogId - The activity log ID to reset
+ * @param {Object} res - Express response object
+ * @returns {void} Returns success message or error response
+ */
 export const resetTimer = async (req, res) => {
   try {
     const { activityLogId } = req.body;
     if (!activityLogId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
 
     const activityLog = await getActivityLog(activityLogId);
     if (!activityLog) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "Activity Log not found.",
       });
     }
 
     if (activityLog.entryType !== "timer") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Invalid operation. This is a manual entry, not a live timer.",
       });
     }
 
     if (activityLog.status === "completed") {
-      return res.status(400).json({ error: "Timer is already stopped." });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Timer is already stopped." });
     }
 
     await ActivityLog.findByIdAndDelete(activityLogId);
-    res.status(200).json({ message: "Timer discarded successfully" });
+    res
+      .status(HTTP_STATUS.NO_CONTENT)
+      .json({ message: "Timer discarded successfully" });
   } catch (error) {
     console.error("Error resetting the timer", error);
-    res.status(500).json({ error: "Failed to reset the timer" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to reset the timer" });
   }
 };
 
-// ==========================================
-// 10. RESUME CRASHED TIMER (Heal Gap)
-// ==========================================
+/**
+ * Resumes a timer that may have crashed or lost connection.
+ * Detects gaps in heartbeats and automatically pauses the timer if gap exceeds 5 minutes.
+ * Auto-stops timer if gap exceeds 24 hours.
+ * @async
+ * @function resumeCrashedTimer
+ * @param {Object} req - Express request object
+ * @param {string} req.body.activityLogId - The activity log ID to resume
+ * @param {Object} res - Express response object
+ * @returns {void} Returns updated activity log or error response
+ */
 export const resumeCrashedTimer = async (req, res) => {
   try {
     const { activityLogId } = req.body;
     if (!activityLogId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
       });
     }
@@ -406,28 +517,29 @@ export const resumeCrashedTimer = async (req, res) => {
     const activityLog = await getActivityLog(activityLogId);
     if (!activityLog) {
       console.log("Not found");
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: "Activity Log not found.",
       });
     }
 
     if (activityLog.entryType !== "timer") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Invalid operation. This is a manual entry, not a live timer.",
       });
     }
 
     if (activityLog.status !== "active") {
-      return res.status(200).json(activityLog);
+      return res.status(HTTP_STATUS.OK).json(activityLog);
     }
 
     const now = new Date();
     const lastHeartbeat = new Date(activityLog.lastHeartbeat);
     const gapDuration = now - lastHeartbeat;
-    const FIVE_MINUTES = 5 * 60 * 1000;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
-    if (gapDuration > FIVE_MINUTES && gapDuration < TWENTY_FOUR_HOURS) {
+    if (
+      gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS &&
+      gapDuration < APP_CONFIG.MAX_GAP_DURATION_FOR_CONFIRMATION_MS
+    ) {
       console.log(
         `[Recovery] Gap detected: ${Math.floor(gapDuration / 60000)} min. Injecting pause.`,
       );
@@ -439,20 +551,14 @@ export const resumeCrashedTimer = async (req, res) => {
       activityLog.lastHeartbeat = now;
 
       const savedLog = await activityLog.save();
-      return res.status(200).json(savedLog);
-    } else if (gapDuration >= TWENTY_FOUR_HOURS) {
+      return res.status(HTTP_STATUS.OK).json(savedLog);
+    } else if (gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS) {
       console.log(
         `[Recovery] Timer abandoned (>24h). Auto-stopping at last heartbeat.`,
       );
 
-      const totalPauseDurationInMs = activityLog.pauseHistory.reduce(
-        (acc, p) => {
-          if (p.pauseTime && p.resumeTime) {
-            return acc + (new Date(p.resumeTime) - new Date(p.pauseTime));
-          }
-          return acc;
-        },
-        0,
+      const totalPauseDurationInMs = calculateTotalPauseDurationInMs(
+        activityLog.pauseHistory,
       );
 
       const validDuration = Math.max(
@@ -470,14 +576,16 @@ export const resumeCrashedTimer = async (req, res) => {
       activityLog.duration = validDuration;
 
       const savedLog = await activityLog.save();
-      return res.status(200).json(savedLog);
+      return res.status(HTTP_STATUS.OK).json(savedLog);
     }
 
     activityLog.lastHeartbeat = now;
     await activityLog.save();
-    res.status(200).json(activityLog);
+    res.status(HTTP_STATUS.OK).json(activityLog);
   } catch (error) {
     console.error("Error resuming crashed timer:", error);
-    res.status(500).json({ error: "Failed to resume crashed timer" });
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to resume crashed timer" });
   }
 };

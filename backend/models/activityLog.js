@@ -1,5 +1,19 @@
 import mongoose from "mongoose";
 
+/**
+ * ActivityLog Schema
+ * Represents a log entry for an activity tracking session.
+ * @typedef {Object} ActivityLog
+ * @property {ObjectId} activityId - Reference to the Activity document (required)
+ * @property {Date} createdAt - When the log was created (required, default: current date)
+ * @property {Date} startTime - When the activity started (required)
+ * @property {Date} endTime - When the activity ended (optional)
+ * @property {Date} lastHeartbeat - Last heartbeat timestamp (required)
+ * @property {string} entryType - Type of entry: "manual" or "timer" (required)
+ * @property {string} status - Status of the log: "active", "paused", or "completed" (required, default: "active")
+ * @property {Array} pauseHistory - Array of pause/resume events with pauseTime and resumeTime
+ * @property {number} duration - Total duration in seconds (optional, default: 0)
+ */
 const activityLogSchema = new mongoose.Schema({
   activityId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -26,6 +40,6 @@ const activityLogSchema = new mongoose.Schema({
   duration: { type: Number, required: false, default: 0 },
 });
 
-activityLogSchema.index({ startTime: 1, endTime: 1, status: 1 });
+activityLogSchema.index({ status: 1, startTime: 1, endTime: 1 });
 
 export default mongoose.model("ActivityLog", activityLogSchema);

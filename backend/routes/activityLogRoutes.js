@@ -1,4 +1,9 @@
 import express from "express";
+
+/**
+ * ActivityLog Routes
+ * Defines RESTful endpoints for managing activity logs and timers.
+ */
 import {
   getActivityLogs,
   createManualLogEntry,
