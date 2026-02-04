@@ -4,12 +4,31 @@ import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "../data/useActivities";
 import type { Activity } from "../../types/activity";
 import { useConfirm } from "../ui/useConfirmToast";
+import { APP_CONFIG } from "../../constants";
 
+/**
+ * Custom hook for managing the activities form logic.
+ * @remarks
+ * Handles form state, activity creation, and deletion with confirmation dialogs.
+ * Manages color selection and preset colors for new activities.
+ * @returns Object containing form state and handlers
+ * @returns activities             - Array of all activities
+ * @returns loading                - Loading state
+ * @returns name                   - Activity name input value
+ * @returns setName                - Function to update activity name
+ * @returns selectedColor          - Currently selected color
+ * @returns setSelectedColor       - Function to update selected color
+ * @returns presetColors           - Array of preset color options
+ * @returns handleCreateActivity   - Function to create a new activity
+ * @returns handleDeleteActivity   - Function to delete an activity
+ */
 export const useActivitiesForm = () => {
   const { activities, loading, addActivity, deleteActivity } = useActivities();
   const { confirm } = useConfirm();
   const [name, setName] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("#6366f1");
+  const [selectedColor, setSelectedColor] = useState<string>(
+    APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+  );
 
   const presetColors = [
     { name: "Blue", value: "#3b82f6" },
@@ -22,6 +41,10 @@ export const useActivitiesForm = () => {
     { name: "Violet", value: "#a855f7" },
   ];
 
+  /**
+   * Handles activity creation with validation and form reset.
+   * @returns boolean             - True if activity was created successfully, false otherwise
+   */
   const handleCreateActivity = async () => {
     if (!name.trim()) {
       toast.error("Activity name cannot be empty.");
@@ -33,11 +56,15 @@ export const useActivitiesForm = () => {
     });
     if (success) {
       setName("");
-      setSelectedColor("#6366f1");
+      setSelectedColor(APP_CONFIG.DEFAULT_ACTIVITY_COLOR);
     }
     return success;
   };
 
+  /**
+   * Handles activity deletion with confirmation dialog requiring user input.
+   * @param act                    - The activity object to delete
+   */
   const handleDeleteActivity = async (act: Activity) => {
     confirm({
       title: `Delete "${act.name}"?`,

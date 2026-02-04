@@ -29,6 +29,12 @@ import type { Activity } from "../types/activity";
 import type { ActivityLogEntry } from "../types/activityLog";
 import { getInitialActivities, getInitialRecords } from "../data/fixtures";
 
+/**
+ * Sums activity logs by a specified time period.
+ * @param logs                                 - Array of activity logs to sum
+ * @param period                               - Time period to filter by (today, week, month, lastMonth, year, prevYear)
+ * @returns number                             - Total duration in seconds for the specified period
+ */
 const sumLogsByPeriod = (
   logs: ActivityLogEntry[],
   period: "today" | "week" | "month" | "lastMonth" | "year" | "prevYear",
@@ -88,12 +94,24 @@ const sumLogsByPeriod = (
   }, 0);
 };
 
+/**
+ * Formats seconds into a human-readable time string (hours and minutes).
+ * @param seconds                              - Total seconds to format
+ * @returns string                             - Formatted time string like "2h 30m"
+ */
 const formatTimeNew = (seconds: number) => {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   return `${hrs}h ${mins}m`;
 };
 
+/**
+ * Overview component displaying time tracking statistics and charts.
+ * @remarks
+ * Shows time spent per activity with bar and pie charts for the current week.
+ * Displays time summaries for different periods (today, week, month, year).
+ * @returns JSX.Element  - The overview dashboard with charts and statistics
+ */
 function Overview() {
   const [activities] = useState<Activity[]>(getInitialActivities());
   const [logs] = useState<ActivityLogEntry[]>(getInitialRecords());

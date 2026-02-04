@@ -102,10 +102,24 @@ export const isDevDummyEnabled = () => {
   }
 };
 
+/**
+ * Retrieves initial dummy activities for development/testing.
+ * @remarks
+ * Returns a list of predefined activities with colors if dev mode is enabled.
+ * Safe to commit and ignored in production when env var is not set.
+ * @returns Activity[]  - Array of default activities or empty array if dev mode is disabled
+ */
 export const getInitialActivities = (): Activity[] => {
   return isDevDummyEnabled() ? DEFAULT_ACTIVITIES : [];
 };
 
+/**
+ * Retrieves initial dummy activity log records for development/testing.
+ * @remarks
+ * Returns a list of predefined activity log entries spanning multiple days if dev mode is enabled.
+ * Includes various activities with realistic timing patterns.
+ * @returns ActivityLogEntry[]  - Array of default activity log entries or empty array if dev mode is disabled
+ */
 export const getInitialRecords = (): ActivityLogEntry[] => {
   return isDevDummyEnabled() ? DEFAULT_RECORDS : [];
 };

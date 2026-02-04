@@ -13,6 +13,14 @@ interface ConfirmOptions {
   onCancel: () => void;
 }
 
+/**
+ * Custom hook for displaying confirmation dialogs using toast notifications.
+ * @remarks
+ * Provides a consistent interface for user confirmations with customizable options.
+ * Supports different confirmation types: INFO, WARNING, and DANGER.
+ * @returns Object containing confirmation function
+ * @returns confirm - Function to trigger a confirmation dialog
+ */
 export const useConfirm = () => {
   const confirm = (options: ConfirmOptions) => {
     let toastId: string | number;

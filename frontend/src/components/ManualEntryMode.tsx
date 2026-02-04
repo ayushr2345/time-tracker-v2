@@ -2,6 +2,13 @@ import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useManualEntryMode } from "../hooks/logic/useManualEntryMode";
 
+/**
+ * Manual entry mode component for logging past activities.
+ * @remarks
+ * Allows users to manually enter activity duration by selecting activity, day, start, and end times.
+ * Validates inputs and enforces time constraints before submission.
+ * @returns JSX.Element  - The manual entry mode interface
+ */
 function ManualEntryMode() {
   const {
     activities,

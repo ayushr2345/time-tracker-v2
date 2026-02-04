@@ -5,6 +5,13 @@ import ManualEntryMode from "./components/ManualEntryMode";
 import Activities from "./components/Activities";
 import React from "react";
 
+/**
+ * Main application component with tab-based navigation.
+ * @remarks
+ * Renders the main UI with tabs for Overview, Timer Mode, Manual Entry Mode, and Activities.
+ * Manages tab selection state and renders appropriate content based on selected tab.
+ * @returns The main app component with tab navigation
+ */
 function App() {
   const tabs = ["Overview", "Timer Mode", "Manual Entry Mode", "Activities"];
   const [selectedTab, setSelectedTab] = React.useState(tabs[0]);

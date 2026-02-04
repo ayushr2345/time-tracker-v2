@@ -19,6 +19,23 @@ export interface ConfirmToastProps {
   onCancel: () => void;
 }
 
+/**
+ * Confirmation toast component for user action verification.
+ * @remarks
+ * Displays a modal with customizable title, message, and optional text input confirmation.
+ * Supports three types: DANGER, WARNING, and INFO with different styling.
+ * @param props              - Configuration object for the confirmation dialog
+ * @param props.title        - The title of the confirmation dialog
+ * @param props.message      - The message body of the confirmation
+ * @param props.confirmText  - Text for the confirm button (default: "Confirm")
+ * @param props.cancelText   - Text for the cancel button (default: "Cancel")
+ * @param props.type         - Type of confirmation: DANGER, WARNING, or INFO (default: "INFO")
+ * @param props.requireInput - Whether to require text input for confirmation (default: false)
+ * @param props.matchText    - Text that must be typed to enable confirmation
+ * @param props.onConfirm    - Callback function when user confirms
+ * @param props.onCancel     - Callback function when user cancels
+ * @returns                  - A confirmation toast UI element
+ */
 export const ConfirmToast = ({
   title,
   message,

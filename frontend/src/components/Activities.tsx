@@ -3,6 +3,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { useActivitiesForm } from "../hooks/logic/useActivitiesForm";
 import type React from "react";
 
+/**
+ * Activities management component for creating and managing tracked activities.
+ * @remarks
+ * Provides UI for adding new activities with color selection and viewing existing activities.
+ * Includes preset color options and custom color picker functionality.
+ * @returns The activities management interface
+ */
 function Activities() {
   const {
     activities,

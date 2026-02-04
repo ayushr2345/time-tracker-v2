@@ -3,6 +3,11 @@ import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useTimerMode } from "../hooks/logic/useTimerMode";
 
+/**
+ * Formats seconds into HH:MM:SS time format.
+ * @param seconds           - Total seconds to format
+ * @returns string          - Formatted time string in HH:MM:SS format
+ */
 function formatTime(seconds: number) {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
@@ -10,6 +15,13 @@ function formatTime(seconds: number) {
   return [hrs, mins, secs].map((n) => n.toString().padStart(2, "0")).join(":");
 }
 
+/**
+ * Timer mode component for real-time activity tracking.
+ * @remarks
+ * Provides a live timer interface with start, pause, resume, and stop functionality.
+ * Manages timer state and user interactions for activity tracking.
+ * @returns JSX.Element  - The timer mode interface
+ */
 function TimerMode() {
   const {
     activities,

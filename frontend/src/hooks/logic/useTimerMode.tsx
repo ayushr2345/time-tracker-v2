@@ -4,7 +4,13 @@ import { useActivities } from "../data/useActivities";
 import { useConfirm } from "../ui/useConfirmToast";
 import { useActivityLog } from "../data/useActivityLog";
 import type { ActivityLogEntry } from "../../types/activityLog";
+import { APP_CONFIG } from "../../constants";
 
+/**
+ * Formats seconds into HH:MM:SS time format.
+ * @param seconds           - Total seconds to format
+ * @returns string          - Formatted duration string in HH:MM:SS format
+ */
 const formatDuration = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -12,6 +18,28 @@ const formatDuration = (seconds: number) => {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
+/**
+ * Custom hook for managing timer mode logic and state.
+ * @remarks
+ * Handles timer start/stop/pause/resume operations and crash recovery.
+ * Manages UI state and interval updates for real-time timer display.
+ * @returns Object containing timer state and handlers
+ * @returns activities                       - Array of all activities
+ * @returns loading                          - Loading state
+ * @returns selectedActivityId               - Selected activity ID
+ * @returns handleChangeActivity             - Handler for activity selection
+ * @returns isRunning                        - Whether timer is currently running
+ * @returns elapsed                          - Elapsed time in seconds
+ * @returns isPaused                         - Whether timer is paused
+ * @returns intervalRef                      - Reference to the timer interval
+ * @returns isStartStopButtonDisabled        - Start/stop button disabled state
+ * @returns isPauseResumeButtonDisabled      - Pause/resume button disabled state
+ * @returns isResetButtonDisabled            - Reset button disabled state
+ * @returns handleStart                      - Function to start the timer
+ * @returns handleStop                       - Function to stop the timer
+ * @returns handlePauseResume                - Function to pause/resume the timer
+ * @returns handleResetTimer                 - Function to reset the timer
+ */
 export const useTimerMode = () => {
   const { activities, loading } = useActivities();
   const {
@@ -39,10 +67,18 @@ export const useTimerMode = () => {
   const startRef = useRef<number | null>(null);
   const crashCheckRef = useRef<string | null>(null);
 
+  /**
+   * Handles activity selection change event.
+   * @param e                      - The select element change event
+   */
   const handleChangeActivity = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedActivityId(e.target.value);
   };
 
+  /**
+   * Sets up or resumes the UI tick interval for timer display updates.
+   * @remarks Updates elapsed time every 100ms for smooth UI display
+   */
   const resumeUITick = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -54,6 +90,10 @@ export const useTimerMode = () => {
     }, 1000);
   };
 
+  /**
+   * Starts a new timer for the selected activity.
+   * @remarks Initializes UI state and begins tracking elapsed time
+   */
   const handleStart = async () => {
     if (!selectedActivityId) {
       toast.error("Please select an activity to start the timer");
@@ -75,6 +115,10 @@ export const useTimerMode = () => {
     }
   };
 
+  /**
+   * Stops the running timer with confirmation dialog.
+   * @remarks Calculates duration and prompts user to confirm logging the time
+   */
   const handleStop = () => {
     if (!isRunning) return;
     const now = Date.now();
@@ -139,6 +183,10 @@ export const useTimerMode = () => {
     });
   };
 
+  /**
+   * Toggles between paused and running states for the active timer.
+   * @remarks Handles both pausing and resuming with appropriate state updates
+   */
   const handlePauseResume = async () => {
     if (!isRunning) return;
 
@@ -166,6 +214,10 @@ export const useTimerMode = () => {
     }
   };
 
+  /**
+   * Resets/discards the current timer with confirmation dialog.
+   * @remarks Requires user confirmation due to data loss
+   */
   const handleResetTimer = () => {
     const activeLog = activityLogs.find(
       (log) => log.status === "active" || log.status === "paused",
@@ -298,8 +350,6 @@ export const useTimerMode = () => {
     const lastHeartbeat = new Date(activeLog.lastHeartbeat).getTime();
 
     const gapDuration = now - lastHeartbeat;
-    const FIVE_MINUTES = 5 * 60 * 1000;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
     const activityName =
       activities.find((a) => a._id === activeLog.activityId)?.name ||
@@ -307,7 +357,10 @@ export const useTimerMode = () => {
     // -------------------------------------------------------
     // SCENARIO 1: > 24 Hours (Auto-Stop)
     // -------------------------------------------------------
-    if (activeLog.status === "active" && gapDuration >= TWENTY_FOUR_HOURS) {
+    if (
+      activeLog.status === "active" &&
+      gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS
+    ) {
       (async () => {
         // Backend handles the "Stop at Last Heartbeat" logic
         const processedLog = await resumeCrashedTimer(activeLog._id);
@@ -326,7 +379,10 @@ export const useTimerMode = () => {
     // -------------------------------------------------------
     // SCENARIO 2: > 5 Minutes (Ask User)
     // -------------------------------------------------------
-    if (activeLog.status === "active" && gapDuration > FIVE_MINUTES) {
+    if (
+      activeLog.status === "active" &&
+      gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS
+    ) {
       // Stop ticking visually while we ask
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (crashCheckRef.current === activeLog._id) return;

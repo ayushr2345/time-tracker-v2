@@ -5,12 +5,34 @@ import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "./useActivities";
+import { HTTP_STATUS } from "../../constants";
 
+/**
+ * Custom hook for managing activity logs and timer operations.
+ * @remarks
+ * Handles creating manual entries, starting/stopping timers, pausing/resuming, and crash recovery.
+ * Provides comprehensive timer management functionality with error handling.
+ * @returns Object containing activity logs state and management methods
+ * @returns activityLogs           - Array of all activity logs
+ * @returns loading                - Loading state
+ * @returns fetchActivityLogs      - Function to refetch activity logs
+ * @returns createManualLogEntry   - Function to create a manual log entry
+ * @returns startTimer             - Function to start a new timer
+ * @returns stopTimer              - Function to stop a running timer
+ * @returns pauseTimer             - Function to pause a timer
+ * @returns resumeTimer            - Function to resume a paused timer
+ * @returns sendHeartbeat          - Function to send heartbeat for crash detection
+ * @returns resetTimer             - Function to reset/discard a timer
+ * @returns resumeCrashedTimer     - Function to recover a crashed timer
+ */
 export const useActivityLog = () => {
   const { activities } = useActivities();
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  /**
+   * Fetches all activity logs from the backend and updates state.
+   */
   const fetchActivityLogs = useCallback(async () => {
     setLoading(true);
     try {
@@ -23,6 +45,13 @@ export const useActivityLog = () => {
     }
   }, []);
 
+  /**
+   * Creates a manual activity log entry with validation and error handling.
+   * @param activityId            - The ID of the activity to log
+   * @param startTime             - When the activity started
+   * @param endTime               - When the activity ended
+   * @returns ActivityLogEntry    - The created activity log entry or null if failed
+   */
   const createManualLogEntry = async (
     activityId: string,
     startTime: Date,
@@ -43,7 +72,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);
@@ -56,6 +88,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Starts a new timer for the specified activity with error handling.
+   * @param activityId            - The ID of the activity to start timer for
+   * @returns ActivityLogEntry    - The started activity log entry or null if failed
+   */
   const startTimer = async (activityId: string) => {
     try {
       const startTimerLog = await activityLogService.startTimer(activityId);
@@ -66,7 +103,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);
@@ -79,6 +119,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Stops a running timer and logs the activity with error handling.
+   * @param activityLogId         - The ID of the timer to stop
+   * @returns ActivityLogEntry    - The stopped activity log entry or null if failed
+   */
   const stopTimer = async (activityLogId: string) => {
     try {
       const endTimerLog = await activityLogService.stopTimer(activityLogId);
@@ -95,7 +140,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);
@@ -108,6 +156,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Pauses a running timer with error handling.
+   * @param activityLogId         - The ID of the timer to pause
+   * @returns ActivityLogEntry    - The paused activity log entry or null if failed
+   */
   const pauseTimer = async (activityLogId: string) => {
     try {
       const updatedLog = await activityLogService.pauseTimer(activityLogId);
@@ -122,7 +175,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);
@@ -135,6 +191,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Resumes a paused timer with error handling.
+   * @param activityLogId         - The ID of the timer to resume
+   * @returns ActivityLogEntry    - The resumed activity log entry or null if failed
+   */
   const resumeTimer = async (activityLogId: string) => {
     try {
       const updatedLog = await activityLogService.resumeTimer(activityLogId);
@@ -149,7 +210,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);
@@ -162,6 +226,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Sends a heartbeat for an active timer to detect disconnections.
+   * @param activityLogId         - The ID of the timer to send heartbeat for
+   * @returns ActivityLogEntry    - The updated activity log entry or null if failed
+   */
   const sendHeartbeat = async (activityLogId: string) => {
     try {
       const updatedLog = await activityLogService.sendHeartbeat(activityLogId);
@@ -172,7 +241,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           console.error(serverMsg);
         } else {
           console.error(`Failed: ${serverMsg}`);
@@ -185,6 +257,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Resets/discards a timer without logging time with error handling.
+   * @param activityLogId         - The ID of the timer to reset
+   * @returns ActivityLogEntry    - The deleted activity log entry or null if failed
+   */
   const resetTimer = async (activityLogId: string) => {
     try {
       const logToDelete = activityLogs.find((log) => log._id === activityLogId);
@@ -200,7 +277,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);
@@ -213,6 +293,11 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Attempts to recover a timer that may have crashed or lost connection.
+   * @param activityLogId         - The ID of the timer to recover
+   * @returns ActivityLogEntry    - The recovered activity log entry or null if failed
+   */
   const resumeCrashedTimer = async (activityLogId: string) => {
     try {
       const fixedLog =
@@ -226,7 +311,10 @@ export const useActivityLog = () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         const serverMsg = error.response?.data?.error || error.message;
-        if (error.response?.status === 400 || error.response?.status === 409) {
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
           toast.error(serverMsg);
         } else {
           toast.error(`Failed: ${serverMsg}`);

@@ -14,12 +14,9 @@ export const HTTP_STATUS = {
   SERVER_ERROR: 500,
 };
 
-export const MONGO_DB_ERRORS = {
-  DUPLICATE_KEY: 11000,
-};
-
-const DEFAULT_PORT = 5001;
+const DEFAULT_PORT = 5173;
 const FIVE_MINUTES = 5 * 60 * 1000;
+const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
 /**
@@ -30,11 +27,13 @@ export const APP_CONFIG = {
   /** Default port if port not provided in .env file */
   DEFAULT_PORT: DEFAULT_PORT,
   /** Default hex color for new activities if none provided */
-  DEFAULT_ACTIVITY_COLOR: "#ffffff",
+  DEFAULT_ACTIVITY_COLOR: "#6366f1",
   /** Maximum allowed length of an activity name */
   MAX_ACTIVITY_NAME_LENGTH: 50,
   /** Minimum duration (in ms) required to log a valid activity (5 mins) */
   MIN_ACTIVITY_DURATION_MS: FIVE_MINUTES,
+  /** Need a confirmation from user is manual activity duration is greater than this (12 hrs) */
+  LONG_ACTIVITY_DURATION_MS: TWELVE_HOURS,
   /** Maximum duration (in ms) required to log a valid activity (24 hrs) */
   MAX_ACTIVITY_DURATION_MS: TWENTY_FOUR_HOURS,
   /** Minimum gap duration (in ms) for confirmation of recovery of a  timer entry (5 mins) */

@@ -1,3 +1,10 @@
+/**
+ * Background UI component that renders animated gradient blobs.
+ * @remarks
+ * Creates a fixed background layer with floating animated blobs for visual effect.
+ * Uses CSS animations for smooth, continuous floating motion.
+ * @returns JSX.Element  - A div with animated gradient background elements
+ */
 function UI() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
