@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { APP_CONFIG } from "../constants";
+import { APP_CONFIG } from "../constants.js";
 /**
  * Activity Schema
  * Represents a type of activity that can be tracked.

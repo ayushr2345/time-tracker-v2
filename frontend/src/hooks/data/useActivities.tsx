@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { activityService } from "../../services";
-import type { Activity } from "../../types/activity";
+import type { Activity, ActivityWithLogCount } from "../../types/activity";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,14 +12,14 @@ import { HTTP_STATUS } from "../../constants";
  * Handles fetching, creating, and deleting activities with comprehensive error handling.
  * Provides methods to refetch activities and manage the activities list.
  * @returns Object containing activities state and management methods
- * @returns activities            - Array of all activities
+ * @returns activities            - Array of all activities with their log count
  * @returns loading               - Loading state
  * @returns refetch               - Function to refetch activities
  * @returns addActivity           - Function to create a new activity
  * @returns deleteActivity        - Function to delete an activity
  */
 export const useActivities = () => {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<ActivityWithLogCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   /**
@@ -45,7 +45,11 @@ export const useActivities = () => {
   const addActivity = async (newActivity: Omit<Activity, "_id">) => {
     try {
       const savedActivity = await activityService.createActivity(newActivity);
-      setActivities((prev) => [...prev, savedActivity]);
+      const savedActivityWithLogCount: ActivityWithLogCount = {
+        ...savedActivity,
+        logCount: 0,
+      };
+      setActivities((prev) => [...prev, savedActivityWithLogCount]);
       toast.success(`Activity "${savedActivity.name}" created!`);
       return true;
     } catch (error) {

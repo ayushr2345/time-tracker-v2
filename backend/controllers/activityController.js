@@ -12,7 +12,33 @@ import { APP_CONFIG, HTTP_STATUS, MONGO_DB_ERRORS } from "../constants.js";
 export const getActivities = async (req, res) => {
   try {
     // Sort by name alphabetically for better UX
-    const activities = await Activity.find().sort({ name: 1 });
+    const activities = await Activity.aggregate([
+      // 1. Join with the logs collection to see usage
+      {
+        $lookup: {
+          from: "activitylogs", // Check your DB: Mongoose usually pluralizes this (activitylogs)
+          localField: "_id",
+          foreignField: "activityId",
+          as: "logs",
+        },
+      },
+      // 2. Add a 'logCount' field (The size of the logs array)
+      {
+        $addFields: {
+          logCount: { $size: "$logs" },
+        },
+      },
+      // 3. Cleanup: Remove the heavy 'logs' array (we only need the count)
+      {
+        $project: {
+          logs: 0,
+          __v: 0,
+        },
+      },
+      // 4. Sort alphabetically
+      { $sort: { name: 1 } },
+    ]);
+    console.log(activities);
     res.status(HTTP_STATUS.OK).json(activities);
   } catch (error) {
     console.error("Error fetching activities:", error);
@@ -35,7 +61,6 @@ export const getActivities = async (req, res) => {
  */
 export const createActivity = async (req, res) => {
   try {
-    // TODO: Add a check for activity name length
     const { name, color } = req.body;
     if (!name || !name.trim()) {
       return res
@@ -43,7 +68,7 @@ export const createActivity = async (req, res) => {
         .json({ error: "Activity name is required" });
     }
     const newActivity = new Activity({
-      name: name.trim(),
+      name: name.trim().slice(0, APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH),
       color: color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
     });
     await newActivity.save();

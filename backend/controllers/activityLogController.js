@@ -12,6 +12,7 @@ import {
   getActiveTimer,
   getActivityLog,
 } from "../utils/timerModeEntryUtils.js";
+import { APP_CONFIG, HTTP_STATUS } from "../constants.js";
 
 /**
  * Retrieves all activity logs from the database, sorted by start time (newest first).
@@ -75,9 +76,6 @@ export const createManualLogEntry = async (req, res) => {
         .json({ error: timeValidationError });
     }
 
-    // TODO: Need to check for paused/completed/active logs as well
-    // because current status of timer entries is only updated
-    // when timer mode is selected. To avoid overlap, this is necessary
     const overlappingError = await validateNoOverlaps(startTime, endTime);
     if (overlappingError) {
       return res

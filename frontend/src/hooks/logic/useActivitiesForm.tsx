@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "../data/useActivities";
-import type { Activity } from "../../types/activity";
+import type { Activity, ActivityWithLogCount } from "../../types/activity";
 import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
 
@@ -65,20 +65,35 @@ export const useActivitiesForm = () => {
    * Handles activity deletion with confirmation dialog requiring user input.
    * @param act                    - The activity object to delete
    */
-  const handleDeleteActivity = async (act: Activity) => {
-    confirm({
-      title: `Delete "${act.name}"?`,
-      message:
-        "This action cannot be undone. Type the activity name to confirm.",
-      type: "DANGER",
-      requireInput: true,
-      matchText: act.name,
-      confirmText: "Delete",
-      onConfirm: async () => {
-        await deleteActivity(act._id);
-      },
-      onCancel: () => {},
-    });
+  const handleDeleteActivity = async (act: ActivityWithLogCount) => {
+    if (act.logCount > 0) {
+      confirm({
+        title: `Delete "${act.name}"?`,
+        message:
+          "This action cannot be undone. Type the activity name to confirm.",
+        type: "DANGER",
+        requireInput: true,
+        matchText: act.name,
+        confirmText: "Delete",
+        onConfirm: async () => {
+          await deleteActivity(act._id);
+        },
+        onCancel: () => {},
+      });
+    } else {
+      confirm({
+        title: `Delete "${act.name}"?`,
+        message: "This action cannot be undone.",
+        type: "DANGER",
+        requireInput: false,
+        matchText: "",
+        confirmText: "Delete",
+        onConfirm: async () => {
+          await deleteActivity(act._id);
+        },
+        onCancel: () => {},
+      });
+    }
   };
 
   return {

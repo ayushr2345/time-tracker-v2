@@ -5,15 +5,15 @@
  * Provides methods for fetching, creating, updating, and deleting activities.
  */
 import apiClient from "./apiClient";
-import type { Activity } from "../types/activity";
+import type { Activity, ActivityWithLogCount } from "../types/activity";
 
 export const activityService = {
   /**
    * Fetches all activities from the backend.
    * @returns Promise<Activity[]>  - Resolves to array of all activities
    */
-  getAllActivities: async (): Promise<Activity[]> => {
-    const response = await apiClient.get<Activity[]>(
+  getAllActivities: async (): Promise<ActivityWithLogCount[]> => {
+    const response = await apiClient.get<ActivityWithLogCount[]>(
       "/activities/getActivities",
     );
     return response.data;

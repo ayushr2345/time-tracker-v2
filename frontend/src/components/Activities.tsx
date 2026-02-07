@@ -2,6 +2,7 @@ import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivitiesForm } from "../hooks/logic/useActivitiesForm";
 import type React from "react";
+import { APP_CONFIG } from "../constants";
 
 /**
  * Activities management component for creating and managing tracked activities.
@@ -48,8 +49,9 @@ function Activities() {
           <div className="flex flex-col gap-5">
             <input
               type="text"
-              placeholder="Enter activity name..."
+              placeholder={`Enter activity name... (Max ${APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH} characters)`}
               value={name}
+              maxLength={APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setName(e.target.value)
               }
@@ -188,7 +190,9 @@ function Activities() {
                       }}
                     ></div>
                     <span className="font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-linear-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all truncate text-lg">
-                      {act.name}
+                      {act.name.length > 20
+                        ? act.name.substring(0, 20) + "..."
+                        : act.name}
                     </span>
                   </span>
                   <button

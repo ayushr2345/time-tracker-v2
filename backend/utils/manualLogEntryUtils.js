@@ -75,23 +75,36 @@ export const validateNoOverlaps = async (startTime, endTime) => {
     const end = new Date(endTime);
 
     const overlapLog = await ActivityLog.findOne({
-      status: "completed",
-      $and: [{ startTime: { $lt: end } }, { endTime: { $gt: start } }],
+      $or: [
+        {
+          status: "completed",
+          startTime: { $lt: end },
+          endTime: { $gt: start },
+        },
+        {
+          status: { $in: ["active", "paused"] },
+          startTime: { $lt: end },
+        },
+      ],
     }).populate("activityId", "name");
 
     if (overlapLog) {
       const activityName = overlapLog.activityId
-        ? overlapLog.activityId.name
+        ? overlapLog.activityId?.name
         : "Unknown Activity";
       const sTime = overlapLog.startTime.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
-      const eTime = overlapLog.endTime.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      return `Time overlap detected with "${activityName}" (${sTime} - ${eTime}).`;
+      if (overlapLog.endTime) {
+        const eTime = overlapLog.endTime?.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `Time overlap detected with "${activityName}" (${sTime} - ${eTime}).`;
+      } else {
+        return `Time overlap detected with other timer running for activity ${activityName} (Started at: ${sTime}), please stop the timer first`;
+      }
     }
     return null;
   } catch (error) {

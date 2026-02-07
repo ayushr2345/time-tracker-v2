@@ -32,7 +32,7 @@ export const activityLogService = {
     endTime: Date,
   ): Promise<ActivityLogEntry> => {
     const response = await apiClient.post<ActivityLogEntry>(
-      "/activity-logs/createManualEntry",
+      "/activity-logs/createManualEntryLog",
       {
         activityId,
         startTime,
