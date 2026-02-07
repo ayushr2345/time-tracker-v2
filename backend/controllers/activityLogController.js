@@ -48,7 +48,8 @@ export const getActivityLogs = async (req, res) => {
  */
 export const createManualLogEntry = async (req, res) => {
   try {
-    const { activityId, startTime, endTime } = req.body;
+    const activityId = req.params.id;
+    const { startTime, endTime } = req.body;
     if (!activityId || !startTime || !endTime) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required fields",
@@ -159,7 +160,7 @@ export const getActivityLogsForCustomRange = async (req, res) => {
  */
 export const startTimer = async (req, res) => {
   try {
-    const { activityId } = req.body;
+    const activityId = req.params.id;
     if (!activityId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
@@ -181,12 +182,13 @@ export const startTimer = async (req, res) => {
       });
     }
 
+    const activityStartTime = new Date();
     const newActivityLog = new ActivityLog({
       activityId: activityId,
-      createdAt: new Date(),
-      startTime: new Date(),
+      createdAt: activityStartTime,
+      startTime: activityStartTime,
       endTime: null,
-      lastHeartbeat: new Date(),
+      lastHeartbeat: activityStartTime,
       entryType: "timer",
       status: "active",
       duration: null,
@@ -213,7 +215,7 @@ export const startTimer = async (req, res) => {
  */
 export const stopTimer = async (req, res) => {
   try {
-    const { activityLogId } = req.body;
+    const activityLogId = req.params.id;
     if (!activityLogId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
@@ -276,7 +278,7 @@ export const stopTimer = async (req, res) => {
  */
 export const pauseTimer = async (req, res) => {
   try {
-    const { activityLogId } = req.body;
+    const activityLogId = req.params.id;
     if (!activityLogId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
@@ -333,7 +335,7 @@ export const pauseTimer = async (req, res) => {
  */
 export const resumeTimer = async (req, res) => {
   try {
-    const { activityLogId } = req.body;
+    const activityLogId = req.params.id;
     if (!activityLogId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
@@ -406,7 +408,7 @@ export const resumeTimer = async (req, res) => {
  */
 export const sendHeartbeat = async (req, res) => {
   try {
-    const { activityLogId } = req.body;
+    const activityLogId = req.params.id;
     if (!activityLogId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
@@ -456,7 +458,7 @@ export const sendHeartbeat = async (req, res) => {
  */
 export const resetTimer = async (req, res) => {
   try {
-    const { activityLogId } = req.body;
+    const activityLogId = req.params.id;
     if (!activityLogId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",
@@ -507,7 +509,7 @@ export const resetTimer = async (req, res) => {
  */
 export const resumeCrashedTimer = async (req, res) => {
   try {
-    const { activityLogId } = req.body;
+    const activityLogId = req.params.id;
     if (!activityLogId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: "Missing required field",

@@ -15,6 +15,6 @@ import {
 router.get("/getActivities", getActivities);
 router.post("/createActivity", createActivity);
 router.delete("/deleteActivity/:id", deleteActivity);
-router.put("/updateActivity/:id", updateActivity);
+router.patch("/updateActivity/:id", updateActivity);
 
 export default router;

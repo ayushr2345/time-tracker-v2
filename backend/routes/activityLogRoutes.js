@@ -19,15 +19,15 @@ import {
 
 const router = express.Router();
 
-router.post("/createManualEntryLog", createManualLogEntry);
+router.post("/createManualEntryLog/:id", createManualLogEntry);
 router.get("/getActivityLogs", getActivityLogs);
 router.get("/getActivityLogsForCustomRange", getActivityLogsForCustomRange);
-router.post("/startTimer", startTimer);
-router.put("/stopTimer", stopTimer);
-router.put("/pauseTimer", pauseTimer);
-router.put("/resumeTimer", resumeTimer);
-router.put("/sendHeartbeat", sendHeartbeat);
-router.delete("/resetTimer", resetTimer);
-router.put("/resumeCrashedTimer", resumeCrashedTimer);
+router.post("/startTimer/:id", startTimer);
+router.patch("/stopTimer/:id", stopTimer);
+router.patch("/pauseTimer/:id", pauseTimer);
+router.patch("/resumeTimer/:id", resumeTimer);
+router.patch("/sendHeartbeat/:id", sendHeartbeat);
+router.delete("/resetTimer/:id", resetTimer);
+router.patch("/resumeCrashedTimer/:id", resumeCrashedTimer);
 
 export default router;

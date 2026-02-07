@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "../data/useActivities";
-import type { Activity, ActivityWithLogCount } from "../../types/activity";
+import type { ActivityWithLogCount } from "../../types/activity";
 import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
 
