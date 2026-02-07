@@ -124,8 +124,10 @@ export const useTimerMode = () => {
     const now = Date.now();
     const startedAt = startRef.current ?? now;
     const duration = Math.round((now - startedAt) / 1000);
-    if (duration < 5) {
-      toast.error("Duration too short to log (minimum 5 seconds)");
+    if (duration < APP_CONFIG.MIN_ACTIVITY_DURATION_MINS * 60) {
+      toast.error(
+        `Duration too short to log (minimum ${APP_CONFIG.MIN_ACTIVITY_DURATION_MINS} minutes)`,
+      );
       return;
     }
     const activeLog = activityLogs.find(
@@ -321,7 +323,7 @@ export const useTimerMode = () => {
         setIsPaused(false);
         startRef.current = effectiveStart;
         setElapsed(Math.floor((Date.now() - effectiveStart) / 1000));
-        resumeUITick(); // Assumes resumeUiTick is available in scope
+        resumeUITick();
       } else if (log.status === "paused") {
         setIsPaused(true);
         if (log.pauseHistory && log.pauseHistory.length > 0) {
@@ -343,13 +345,17 @@ export const useTimerMode = () => {
       setIsResetButtonDisabled(false);
     };
 
+    if (crashCheckRef.current === activeLog._id) {
+      restoreStateFromLog(activeLog);
+      return;
+    }
+
     // -------------------------------------------------------
     // CALCULATE GAP
     // -------------------------------------------------------
-    const now = Date.now();
-    const lastHeartbeat = new Date(activeLog.lastHeartbeat).getTime();
-
-    const gapDuration = now - lastHeartbeat;
+    const now = new Date();
+    const lastHeartbeat = new Date(activeLog.lastHeartbeat);
+    const gapDuration = now.getTime() - lastHeartbeat.getTime();
 
     const activityName =
       activities.find((a) => a._id === activeLog.activityId)?.name ||
@@ -362,6 +368,8 @@ export const useTimerMode = () => {
       gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS
     ) {
       (async () => {
+        if (crashCheckRef.current === activeLog._id) return;
+        crashCheckRef.current = activeLog._id;
         // Backend handles the "Stop at Last Heartbeat" logic
         const processedLog = await resumeCrashedTimer(activeLog._id);
 
@@ -371,6 +379,9 @@ export const useTimerMode = () => {
           toast.info(
             `Session expired (>24h) for ${activityName} and was saved automatically.`,
           );
+        } else if (processedLog?.status === "active") {
+          await resetTimer(activeLog._id);
+          crashCheckRef.current = null;
         }
       })();
       return; // Stop execution here
@@ -389,7 +400,7 @@ export const useTimerMode = () => {
 
       crashCheckRef.current = activeLog._id;
 
-      const minutesAway = Math.floor(gapDuration / 60000);
+      const minutesAway = Math.floor(gapDuration / (60 * 1000));
 
       confirm({
         title: "Timer Interrupted",
@@ -403,13 +414,19 @@ export const useTimerMode = () => {
           // "Heal" the timer (Inject Pause)
           // This updates 'activityLogs', causing this useEffect to run again.
           // On the next run, gapDuration will be 0, falling through to Scenario 3.
-          await resumeCrashedTimer(activeLog._id);
+          const res = await resumeCrashedTimer(activeLog._id);
+          if (res) {
+            restoreStateFromLog(activeLog);
+          } else {
+            toast.error("Error resuming the log");
+          }
         },
 
         onCancel: async () => {
           // Stop the timer immediately
           // This updates 'activityLogs' to completed, resetting the UI on next render.
           await stopTimer(activeLog._id);
+          crashCheckRef.current = null;
         },
       });
       return; // Stop execution, wait for user input
@@ -440,5 +457,3 @@ export const useTimerMode = () => {
     handleResetTimer,
   };
 };
-
-// write these functions carefully for because buttons need to be disabled when selected any option and stuff

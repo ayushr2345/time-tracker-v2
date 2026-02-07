@@ -286,9 +286,9 @@ export const useActivityLog = () => {
           toast.error(`Failed: ${serverMsg}`);
         }
       } else {
-        toast.error(`Failed to create activity: ${error}`);
+        toast.error(`Failed to reset activity timer: ${error}`);
       }
-      console.log("Error creating activity:", error);
+      console.log("Error resetting activity timer:", error);
       return null;
     }
   };

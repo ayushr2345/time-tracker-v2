@@ -534,14 +534,14 @@ export const resumeCrashedTimer = async (req, res) => {
 
     const now = new Date();
     const lastHeartbeat = new Date(activityLog.lastHeartbeat);
-    const gapDuration = now - lastHeartbeat;
+    const gapDuration = now.getTime() - lastHeartbeat.getTime();
 
     if (
       gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS &&
       gapDuration < APP_CONFIG.MAX_GAP_DURATION_FOR_CONFIRMATION_MS
     ) {
       console.log(
-        `[Recovery] Gap detected: ${Math.floor(gapDuration / 60000)} min. Injecting pause.`,
+        `[Recovery] Gap detected: ${Math.floor(gapDuration / (60 * 1000))} min. Injecting pause.`,
       );
       activityLog.pauseHistory.push({
         pauseTime: lastHeartbeat,
@@ -571,12 +571,16 @@ export const resumeCrashedTimer = async (req, res) => {
         ),
       );
 
-      activityLog.endTime = lastHeartbeat;
-      activityLog.status = "completed";
-      activityLog.duration = validDuration;
+      if (validDuration >= APP_CONFIG.MIN_ACTIVITY_DURATION_MS) {
+        activityLog.endTime = lastHeartbeat;
+        activityLog.status = "completed";
+        activityLog.duration = validDuration;
 
-      const savedLog = await activityLog.save();
-      return res.status(HTTP_STATUS.OK).json(savedLog);
+        const savedLog = await activityLog.save();
+        return res.status(HTTP_STATUS.OK).json(savedLog);
+      } else {
+        return res.status(HTTP_STATUS.OK).json(activityLog);
+      }
     }
 
     activityLog.lastHeartbeat = now;

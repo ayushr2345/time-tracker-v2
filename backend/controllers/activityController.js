@@ -38,7 +38,6 @@ export const getActivities = async (req, res) => {
       // 4. Sort alphabetically
       { $sort: { name: 1 } },
     ]);
-    console.log(activities);
     res.status(HTTP_STATUS.OK).json(activities);
   } catch (error) {
     console.error("Error fetching activities:", error);
