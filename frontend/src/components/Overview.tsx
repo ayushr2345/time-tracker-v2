@@ -12,98 +12,9 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
-// Define beautiful modern colors for charts
-const chartColors = [
-  "#8b5cf6", // purple
-  "#3b82f6", // blue
-  "#ec4899", // pink
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#06b6d4", // cyan
-  "#f97316", // orange
-  "#a855f7", // violet
-];
-
 import type { Activity } from "../types/activity";
 import type { ActivityLogEntry } from "../types/activityLog";
-import { getInitialActivities, getInitialRecords } from "../data/fixtures";
-
-/**
- * Sums activity logs by a specified time period.
- * @param logs                                 - Array of activity logs to sum
- * @param period                               - Time period to filter by (today, week, month, lastMonth, year, prevYear)
- * @returns number                             - Total duration in seconds for the specified period
- */
-const sumLogsByPeriod = (
-  logs: ActivityLogEntry[],
-  period: "today" | "week" | "month" | "lastMonth" | "year" | "prevYear",
-) => {
-  const now = new Date();
-
-  const startOfToday = new Date(now);
-  startOfToday.setHours(0, 0, 0, 0);
-
-  const startOfWeek = new Date(now);
-  const day = startOfWeek.getDay(); // 0 (Sun) to 6 (Sat)
-  const diff = day === 0 ? 6 : day - 1; // Treat Monday as start
-  startOfWeek.setDate(startOfWeek.getDate() - diff);
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    0,
-    23,
-    59,
-    59,
-    999,
-  );
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-
-  return logs.reduce((total, log) => {
-    const start = log.startTime;
-    const end = log.endTime;
-    const duration = (end.getTime() - start.getTime()) / 1000; // seconds
-
-    switch (period) {
-      case "today":
-        if (start >= startOfToday) return total + duration;
-        break;
-      case "week":
-        if (start >= startOfWeek) return total + duration;
-        break;
-      case "month":
-        if (start >= startOfMonth) return total + duration;
-        break;
-      case "lastMonth":
-        if (start >= startOfLastMonth && start <= endOfLastMonth)
-          return total + duration;
-        break;
-      case "year":
-        if (start >= startOfYear) return total + duration;
-        break;
-      case "prevYear":
-        if (start < startOfYear) return total + duration;
-        break;
-    }
-
-    return total;
-  }, 0);
-};
-
-/**
- * Formats seconds into a human-readable time string (hours and minutes).
- * @param seconds                              - Total seconds to format
- * @returns string                             - Formatted time string like "2h 30m"
- */
-const formatTimeNew = (seconds: number) => {
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hrs}h ${mins}m`;
-};
+import { useOverview } from "../hooks/logic/useOverview";
 
 /**
  * Overview component displaying time tracking statistics and charts.
@@ -113,27 +24,20 @@ const formatTimeNew = (seconds: number) => {
  * @returns JSX.Element  - The overview dashboard with charts and statistics
  */
 function Overview() {
-  const [activities] = useState<Activity[]>(getInitialActivities());
-  const [logs] = useState<ActivityLogEntry[]>(getInitialRecords());
-  const [isLoadingOverview, setIsLoadingOverview] = useState(true);
+  const {
+    activities,
+    activityLogs,
+    activitiesLoading,
+    activityLogsLoading,
+    chartColors,
+    formatTime,
+    sumLogsByPeriod,
+    chartData,
+    isChartDataEmpty,
+  } = useOverview();
 
-  // Calculate data for charts
-  const chartData = activities.map((activity, index) => {
-    const logsForActivity = logs.filter(
-      (log) => log.activityId === activity._id,
-    );
-    const total = sumLogsByPeriod(logsForActivity, "week");
-    return {
-      name: activity.name,
-      time: parseFloat((total / 3600).toFixed(2)), // convert to hours
-      color: activity.color || chartColors[index % chartColors.length],
-    };
-  });
+  const isLoadingOverview = activitiesLoading || activityLogsLoading;
 
-  useEffect(() => {
-    console.log("loaded");
-    setIsLoadingOverview(false);
-  }, []);
   return (
     <div className="space-y-8 sm:space-y-10 px-2 sm:px-4 py-4 sm:py-6">
       {isLoadingOverview ? (
@@ -197,16 +101,16 @@ function Overview() {
                 </div>
               ) : (
                 activities.map((activity) => {
-                  const activityLogs = logs.filter(
+                  const thisActivityLogs = activityLogs.filter(
                     (log) => log.activityId === activity._id,
                   );
-                  const totalTime = sumLogsByPeriod(activityLogs, "week");
+                  const totalTime = sumLogsByPeriod(thisActivityLogs, "week");
                   console.log(activity.name, totalTime);
 
                   return (
                     <div
                       key={activity._id}
-                      className="group relative overflow-hidden glass rounded-2xl p-6 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+                      className="group relative overflow-hidden glass rounded-2xl p-6 shadow-xl transition-all duration-300 hover:scale-[1.05] hover:shadow-2xl"
                       style={{
                         borderLeft: `4px solid ${activity.color}`,
                         boxShadow: `0 4px 20px ${activity.color}30, 0 0 0 1px rgba(255,255,255,0.1)`,
@@ -232,7 +136,7 @@ function Overview() {
                             <span>Total This Week</span>
                           </p>
                           <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
-                            {formatTimeNew(totalTime)}
+                            {formatTime(totalTime)}
                           </p>
                         </div>
                       </div>
@@ -250,7 +154,7 @@ function Overview() {
               <span className="text-gradient">Weekly Analytics</span>
             </h2>
 
-            {chartData.length === 0 ? (
+            {isChartDataEmpty(chartData) ? (
               <div className="glass text-white p-10 rounded-2xl text-center shadow-xl">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
@@ -270,7 +174,7 @@ function Overview() {
                     </svg>
                   </div>
                   <p className="font-semibold text-lg">
-                    No data available for charts
+                    No data available for weekly charts
                   </p>
                   <p className="text-gray-400 text-sm">
                     Start tracking activities to see analytics
@@ -413,38 +317,38 @@ function Overview() {
                   [
                     {
                       label: "Today",
-                      value: sumLogsByPeriod(logs, "today"),
+                      value: sumLogsByPeriod(activityLogs, "today"),
                       gradient: "from-blue-500 via-blue-600 to-cyan-500",
                       icon: "🌅",
                     },
                     {
                       label: "This Week",
-                      value: sumLogsByPeriod(logs, "week"),
+                      value: sumLogsByPeriod(activityLogs, "week"),
                       gradient: "from-purple-500 via-purple-600 to-pink-500",
                       icon: "📅",
                     },
                     {
                       label: "This Month",
-                      value: sumLogsByPeriod(logs, "month"),
+                      value: sumLogsByPeriod(activityLogs, "month"),
                       gradient: "from-indigo-500 via-indigo-600 to-purple-500",
                       icon: "📆",
                     },
                     {
                       label: "This Year",
-                      value: sumLogsByPeriod(logs, "year"),
+                      value: sumLogsByPeriod(activityLogs, "year"),
                       gradient: "from-pink-500 via-pink-600 to-rose-500",
                       icon: "🗓️",
                     },
                     {
                       label: "Previous Year",
-                      value: sumLogsByPeriod(logs, "prevYear"),
+                      value: sumLogsByPeriod(activityLogs, "prevYear"),
                       gradient: "from-rose-500 via-rose-600 to-purple-500",
                       icon: "🗓️",
                     },
                   ].map((item, idx) => (
                     <div
                       key={idx}
-                      className={`group relative overflow-hidden bg-gradient-to-br ${item.gradient} p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]`}
+                      className={`group relative overflow-hidden bg-gradient-to-br ${item.gradient} p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.05]`}
                     >
                       <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
                       <div className="relative z-10 flex items-center justify-between">
@@ -454,7 +358,7 @@ function Overview() {
                             <span>{item.label}</span>
                           </p>
                           <p className="text-3xl font-extrabold text-white">
-                            {formatTimeNew(item.value)}
+                            {formatTime(item.value)}
                           </p>
                         </div>
                         <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -476,7 +380,7 @@ function Overview() {
               <div className="glass rounded-xl overflow-hidden shadow-xl flex-1 flex flex-col min-h-0">
                 {isLoadingOverview ? (
                   <div className="h-12 w-full glass animate-pulse rounded-xl" />
-                ) : activities.length === 0 || logs.length === 0 ? (
+                ) : activities.length === 0 || activityLogs.length === 0 ? (
                   <div className="flex items-center justify-center p-10 flex-1">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
@@ -505,7 +409,7 @@ function Overview() {
                   </div>
                 ) : (
                   <ul className="divide-y divide-white/10 flex-1 overflow-y-auto">
-                    {logs
+                    {activityLogs
                       .slice(-5)
                       .reverse()
                       .map((log) => {
@@ -513,20 +417,20 @@ function Overview() {
                           (a) => a._id === log.activityId,
                         );
 
-                        const today = new Date().toISOString().split("T")[0];
-                        const start = new Date(`${today}T${log.startTime}`);
-                        const end = new Date(`${today}T${log.endTime}`);
+                        const start = new Date(log.startTime);
+                        const end = log.endTime
+                          ? new Date(log.endTime)
+                          : new Date();
                         const duration =
                           (end.getTime() - start.getTime()) / 1000;
-
                         return (
                           <li
                             key={log._id}
-                            className="px-5 sm:px-6 py-9 flex justify-between items-center hover:bg-white/5 transition-all duration-300 group"
+                            className="px-5 sm:px-6 py-9 flex justify-between items-center hover:bg-white/5 hover:scale-[1.05] transition-all duration-300 group"
                           >
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                               <div
-                                className="w-4 h-4 rounded-full flex-shrink-0 transition-all"
+                                className="w-8 h-8 rounded-full flex-shrink-0 transition-all"
                                 style={{
                                   backgroundColor: activity?.color || "#6366f1",
                                   boxShadow: `0 0 12px ${
@@ -534,7 +438,7 @@ function Overview() {
                                   }80`,
                                 }}
                               ></div>
-                              <div className="flex-1 min-w-0">
+                              <div className="flex-10 min-w-0 text-left">
                                 <p className="font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all truncate text-base">
                                   {activity?.name ?? "Unknown Activity"}
                                 </p>
@@ -544,21 +448,26 @@ function Overview() {
                                     {start.toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
+                                      hour12: false,
                                     })}{" "}
                                     -{" "}
                                     {end.toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
+                                      hour12: false,
                                     })}
                                   </span>
                                 </p>
                               </div>
                             </div>
-                            <div className="ml-4 flex-shrink-0">
-                              <span className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 px-4 py-2 glass rounded-xl">
+                            <div
+                              className=" min-w-[160px] h-14 flex items-center justify-center px-4 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md shadow-lg transition-all duration-300 
+                                          hover:scale-[1.05] hover:bg-white/10 hover:border-blue-400/30 hover:shadow-blue-500/20 cursor-default"
+                            >
+                              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 tabular-numstracking-tight">
                                 {isNaN(duration)
                                   ? "Invalid"
-                                  : formatTimeNew(duration)}
+                                  : formatTime(duration)}
                               </span>
                             </div>
                           </li>
@@ -578,6 +487,11 @@ function Overview() {
 export default Overview;
 
 // possible refactors:
-// 1. called formatTimeNew in multiple places - can be moved to a utility file
+// 1. called formatTime in multiple places - can be moved to a utility file
 // 2. called sumLogsByPeriod in multiple places - can be moved to a utility file
 // 3. similar toasts, buttons overall in the UI - can be abstracted into reusable components
+
+// TODO:
+// 1. Refactor
+// 2. Make use of get data for week/today/etc
+// 3. improve the logic in Overview.tsx as well as useOverview.tsx

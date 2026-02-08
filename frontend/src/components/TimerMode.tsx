@@ -184,7 +184,3 @@ function TimerMode() {
 }
 
 export default TimerMode;
-
-// TODO: Overnight edge case: Start timer before midnight, stop after midnight - handle correctly
-//       look up where the time spent should go (previous day vs current day) based on greater portion of time spent
-//       or split into two records automatically -- option B is better as it maintains accuracy -- no overflow of time in a single day
