@@ -91,11 +91,15 @@ export const useActivityLog = () => {
   /**
    * Starts a new timer for the specified activity with error handling.
    * @param activityId            - The ID of the activity to start timer for
+   * @param startTime             - Optional: start time of a log (used in case of split timer)
    * @returns ActivityLogEntry    - The started activity log entry or null if failed
    */
-  const startTimer = async (activityId: string) => {
+  const startTimer = async (activityId: string, startTime?: Date) => {
     try {
-      const startTimerLog = await activityLogService.startTimer(activityId);
+      const startTimerLog = await activityLogService.startTimer(
+        activityId,
+        startTime,
+      );
       setActivityLogs((prev) => [startTimerLog, ...prev]);
       const activityName = activities.find((a) => a._id === activityId)?.name;
       toast.success(`Started timer for "${activityName}"!`);
@@ -122,11 +126,15 @@ export const useActivityLog = () => {
   /**
    * Stops a running timer and logs the activity with error handling.
    * @param activityLogId         - The ID of the timer to stop
+   * @param endTime               - Optional: end time of a log (used in case of split timer)
    * @returns ActivityLogEntry    - The stopped activity log entry or null if failed
    */
-  const stopTimer = async (activityLogId: string) => {
+  const stopTimer = async (activityLogId: string, endTime?: Date) => {
     try {
-      const endTimerLog = await activityLogService.stopTimer(activityLogId);
+      const endTimerLog = await activityLogService.stopTimer(
+        activityLogId,
+        endTime,
+      );
       setActivityLogs((prev) =>
         prev.map((log) => (log._id === activityLogId ? endTimerLog : log)),
       );

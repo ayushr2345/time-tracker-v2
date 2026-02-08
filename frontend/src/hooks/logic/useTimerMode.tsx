@@ -66,6 +66,7 @@ export const useTimerMode = () => {
   const intervalRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const crashCheckRef = useRef<string | null>(null);
+  const lastSplitDateRef = useRef<string | null>(null);
 
   /**
    * Handles activity selection change event.
@@ -275,18 +276,16 @@ export const useTimerMode = () => {
     });
   };
 
-  // =========================================================
-  // 6. RESTORE STATE ON REFRESH (Rehydration)
-  // =========================================================
   useEffect(() => {
-    // 1. Initial Checks
-    if (loading || activityLogs.length === 0) return;
+    // 1. Initial Safety Checks
+    if (loading) return;
 
+    // Find the current active or paused session
     const activeLog = activityLogs.find(
       (log) => log.status === "active" || log.status === "paused",
     );
 
-    // If no active log, ensure UI is reset and exit
+    // If no active log exists, strict reset of the UI
     if (!activeLog) {
       setIsRunning(false);
       setIsPaused(false);
@@ -299,10 +298,60 @@ export const useTimerMode = () => {
     }
 
     // -------------------------------------------------------
+    // SCENARIO 0: "Lazy Split" (Fixing a missed midnight split)
+    // -------------------------------------------------------
+    // Check if the active log started on a DIFFERENT day than today.
+    const logStartDate = new Date(activeLog.startTime);
+    const today = new Date();
+
+    const isDifferentDay =
+      logStartDate.getDate() !== today.getDate() ||
+      logStartDate.getMonth() !== today.getMonth() ||
+      logStartDate.getFullYear() !== today.getFullYear();
+
+    if (activeLog.status === "active" && isDifferentDay) {
+      console.log(
+        "🛠️ Found a log from yesterday. Triggering recovery split...",
+      );
+
+      // Lock to prevent loops
+      if (crashCheckRef.current === activeLog._id) return;
+      crashCheckRef.current = activeLog._id;
+
+      (async () => {
+        // 1. Calculate the end of THAT specific day
+        const endOfLogDate = new Date(logStartDate);
+        endOfLogDate.setHours(23, 59, 59, 999);
+
+        // 2. Calculate the start of the NEXT day
+        const startOfNextDay = new Date(endOfLogDate);
+        startOfNextDay.setTime(startOfNextDay.getTime() + 1); // +1ms
+
+        try {
+          // 3. Stop the old one
+          await stopTimer(activeLog._id, endOfLogDate);
+
+          // 4. Start the new one
+          // Note: This starts the new timer at 00:00:00 of the correct day
+          await startTimer(activeLog.activityId, startOfNextDay);
+
+          toast.success("Recovered missed split from previous day.");
+        } catch (err) {
+          console.error("Recovery split failed", err);
+          // It will try again on next refresh
+        } finally {
+          crashCheckRef.current = null;
+        }
+      })();
+
+      return; // Stop execution so we don't restore UI for the old log
+    }
+
+    // -------------------------------------------------------
     // HELPER: Restore UI from a Valid Log
     // -------------------------------------------------------
     const restoreStateFromLog = (log: ActivityLogEntry) => {
-      // Logic for "Active" and "Paused" states
+      // Calculate effective start time by subtracting total paused duration
       const startTime = new Date(log.startTime).getTime();
       const totalPausedMs = (log.pauseHistory || []).reduce((acc, slot) => {
         if (slot.resumeTime && slot.pauseTime) {
@@ -316,16 +365,25 @@ export const useTimerMode = () => {
       }, 0);
 
       const effectiveStart = startTime + totalPausedMs;
+
+      // Update UI State
       setSelectedActivityId(log.activityId);
       setIsRunning(true);
 
       if (log.status === "active") {
         setIsPaused(false);
         startRef.current = effectiveStart;
+
+        // Update elapsed immediately to prevent "00:00:00" flash
         setElapsed(Math.floor((Date.now() - effectiveStart) / 1000));
+
+        // Restart the UI tick
         resumeUITick();
       } else if (log.status === "paused") {
         setIsPaused(true);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+
+        // Calculate frozen elapsed time based on last pause
         if (log.pauseHistory && log.pauseHistory.length > 0) {
           const lastPause = log.pauseHistory[log.pauseHistory.length - 1];
           if (lastPause?.pauseTime) {
@@ -336,108 +394,150 @@ export const useTimerMode = () => {
             setElapsed(frozenElapsed);
           }
         }
-        if (intervalRef.current) clearInterval(intervalRef.current);
       }
 
-      // Enable buttons
+      // Enable control buttons
       setIsStartStopButtonDisabled(false);
       setIsPauseResumeButtonDisabled(false);
       setIsResetButtonDisabled(false);
     };
 
+    // -------------------------------------------------------
+    // CRASH DETECTION & RECOVERY
+    // -------------------------------------------------------
+
+    // If we are already handling a crash for this specific log,
+    // don't run the check again (prevents loops).
     if (crashCheckRef.current === activeLog._id) {
-      restoreStateFromLog(activeLog);
+      // Note: We do NOT call restoreStateFromLog here because
+      // we are likely waiting for user input in the modal.
       return;
     }
 
-    // -------------------------------------------------------
-    // CALCULATE GAP
-    // -------------------------------------------------------
     const now = new Date();
     const lastHeartbeat = new Date(activeLog.lastHeartbeat);
     const gapDuration = now.getTime() - lastHeartbeat.getTime();
 
-    const activityName =
-      activities.find((a) => a._id === activeLog.activityId)?.name ||
-      "Activity";
-    // -------------------------------------------------------
-    // SCENARIO 1: > 24 Hours (Auto-Stop)
-    // -------------------------------------------------------
+    // SCENARIO 1: > 24 Hours (Auto-Stop silently)
     if (
       activeLog.status === "active" &&
       gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS
     ) {
+      crashCheckRef.current = activeLog._id; // Lock it
+
       (async () => {
-        if (crashCheckRef.current === activeLog._id) return;
-        crashCheckRef.current = activeLog._id;
-        // Backend handles the "Stop at Last Heartbeat" logic
+        // Backend handles "Stop at Last Heartbeat"
         const processedLog = await resumeCrashedTimer(activeLog._id);
 
-        // If backend returns 'completed', notify user.
-        // The UI will reset on the next render because 'activeLog' won't be found.
+        const activityName =
+          activities.find((a) => a._id === activeLog.activityId)?.name ||
+          "Activity";
+
         if (processedLog?.status === "completed") {
           toast.info(
-            `Session expired (>24h) for ${activityName} and was saved automatically.`,
+            `Session expired (>24h) for ${activityName}. Saved automatically.`,
           );
-        } else if (processedLog?.status === "active") {
+          // UI will reset on next render naturally
+        } else {
+          // Fallback: If backend didn't stop it, we force reset
           await resetTimer(activeLog._id);
-          crashCheckRef.current = null;
         }
+        crashCheckRef.current = null;
       })();
-      return; // Stop execution here
+      return;
     }
 
-    // -------------------------------------------------------
     // SCENARIO 2: > 5 Minutes (Ask User)
-    // -------------------------------------------------------
     if (
       activeLog.status === "active" &&
       gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS
     ) {
       // Stop ticking visually while we ask
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (crashCheckRef.current === activeLog._id) return;
 
-      crashCheckRef.current = activeLog._id;
-
+      crashCheckRef.current = activeLog._id; // Lock it
       const minutesAway = Math.floor(gapDuration / (60 * 1000));
+      const activityName =
+        activities.find((a) => a._id === activeLog.activityId)?.name ||
+        "Activity";
 
       confirm({
         title: "Timer Interrupted",
         message: `You were away for ${minutesAway} minutes. Do you want to continue (excluding the gap) or stop the timer for ${activityName}?`,
         confirmText: "Continue Session",
-        // Check if your confirm hook supports cancelText, otherwise it shows default
-        // cancelText: "Stop Timer",
         type: "WARNING",
 
         onConfirm: async () => {
-          // "Heal" the timer (Inject Pause)
-          // This updates 'activityLogs', causing this useEffect to run again.
-          // On the next run, gapDuration will be 0, falling through to Scenario 3.
-          const res = await resumeCrashedTimer(activeLog._id);
-          if (res) {
-            restoreStateFromLog(activeLog);
-          } else {
-            toast.error("Error resuming the log");
-          }
+          // "Heal" the timer (Inject Pause).
+          // This updates 'activityLogs', triggering this effect again with 0 gap.
+          await resumeCrashedTimer(activeLog._id);
+          crashCheckRef.current = null;
         },
 
         onCancel: async () => {
-          // Stop the timer immediately
-          // This updates 'activityLogs' to completed, resetting the UI on next render.
-          await stopTimer(activeLog._id);
+          // Stop the timer.
+          // This updates 'activityLogs' to completed, triggering reset.
+          await stopTimer(activeLog._id, lastHeartbeat); // Pass lastHeartbeat to be precise
           crashCheckRef.current = null;
         },
       });
-      return; // Stop execution, wait for user input
+      return;
     }
 
-    // -------------------------------------------------------
-    // SCENARIO 3: < 5 Minutes (Resume Immediately)
-    // -------------------------------------------------------
+    // SCENARIO 3: Normal Operation (No Gap)
+    // Clear lock and restore UI
     crashCheckRef.current = null;
     restoreStateFromLog(activeLog);
   }, [activityLogs, loading]);
+
+  useEffect(() => {
+    if (!isRunning) return;
+
+    // FIX: Don't rely on 'selectedActivityId' state to find the log.
+    // Use the reliable 'status' flag from the data source.
+    const activeLog = activityLogs.find((log) => log.status === "active");
+
+    if (!activeLog) return;
+
+    const checkMidnight = setInterval(async () => {
+      const now = new Date();
+      const todayDateString = now.toDateString();
+
+      // Check: Is it Midnight AND have we not split for this day yet?
+      if (
+        now.getHours() === 0 &&
+        now.getMinutes() === 0 &&
+        now.getSeconds() <= 2 &&
+        lastSplitDateRef.current !== todayDateString
+      ) {
+        lastSplitDateRef.current = todayDateString; // Lock it immediately
+        console.log("🕛 Midnight detected! Splitting timer...");
+
+        // Calculate Boundaries
+        const yesterdayEnd = new Date(now);
+        yesterdayEnd.setHours(23, 59, 59, 999);
+        yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);
+
+        try {
+          // 1. Stop current timer at 23:59:59 yesterday
+          await stopTimer(activeLog._id, yesterdayEnd);
+
+          // 2. Start new timer at 00:00:00 today
+          // FIX: Pass 'todayStart' explicitly
+          await startTimer(activeLog.activityId, todayStart);
+
+          toast.info("New day! Timer split automatically.");
+        } catch (err) {
+          console.error("Split failed", err);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(checkMidnight);
+  }, [isRunning, activityLogs]);
 
   return {
     activities,
@@ -457,3 +557,8 @@ export const useTimerMode = () => {
     handleResetTimer,
   };
 };
+
+// split timer
+// 1. ongoing timer -- just log for previous day and start a new timer..
+// 2. crashed timer -- if healing on a new day, log the previous entry and end it
+// 3. paused timer -- if healing on a new day, log the previous entry and end it

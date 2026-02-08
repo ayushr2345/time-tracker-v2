@@ -48,11 +48,16 @@ export const activityLogService = {
    * Starts a new active timer for a specific activity.
    *
    * @param activityId - The ID of the activity to start tracking.
+   * @param startTime  - Optional: Start time of a log entry (used for split timer)
    * @returns          - A promise resolving to the new "active" activity log entry.
    */
-  startTimer: async (activityId: string): Promise<ActivityLogEntry> => {
+  startTimer: async (
+    activityId: string,
+    startTime?: Date,
+  ): Promise<ActivityLogEntry> => {
     const response = await apiClient.post<ActivityLogEntry>(
       `/activity-logs/startTimer/${activityId}`,
+      startTime ? { startTime } : {},
     );
     return response.data;
   },
@@ -61,11 +66,16 @@ export const activityLogService = {
    * Stops a running timer and marks it as completed.
    *
    * @param activityLogId - The ID of the active log entry to finalize.
+   * @param endTime       - Optional: End time of a log entry (used for split timer)
    * @returns             - A promise resolving to the completed log entry with the final duration.
    */
-  stopTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
+  stopTimer: async (
+    activityLogId: string,
+    endTime?: Date,
+  ): Promise<ActivityLogEntry> => {
     const response = await apiClient.patch<ActivityLogEntry>(
       `/activity-logs/stopTimer/${activityLogId}`,
+      endTime ? { endTime } : {},
     );
     return response.data;
   },
