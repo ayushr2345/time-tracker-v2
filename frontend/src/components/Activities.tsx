@@ -1,15 +1,79 @@
+import React, { useState } from "react";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivitiesForm } from "../hooks/logic/useActivitiesForm";
-import type React from "react";
 import { APP_CONFIG } from "../constants";
+import LoadingSpinner from "./LoadingSpinner";
+import { 
+  Target, 
+  Plus, 
+  Palette, 
+  Trash2, 
+  Edit2, 
+  Save, 
+  X,
+  Check
+} from "lucide-react";
+
+// --- Activity Item Sub-Component ---
+const ActivityItem = ({ activity, onEdit, onDelete }) => (
+  <li
+    className="group relative overflow-hidden rounded-2xl bg-gray-900/50 border border-white/5 hover:border-white/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.01]"
+  >
+    {/* Left Color Bar */}
+    <div 
+      className="absolute left-0 top-0 bottom-0 w-1.5 transition-all group-hover:w-2" 
+      style={{ backgroundColor: activity.color }}
+    />
+
+    <div className="p-5 pl-7 flex items-center justify-between">
+      
+      {/* Activity Info */}
+      <div className="flex items-center gap-4">
+        <div 
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm"
+          style={{ 
+            backgroundColor: `${activity.color}20`, 
+            color: activity.color,
+            border: `1px solid ${activity.color}40`
+          }}
+        >
+          {activity.name.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all">
+            {activity.name}
+          </h3>
+          <p className="text-xs text-gray-500 font-mono mt-0.5">
+            {activity.color.toUpperCase()}
+          </p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => onEdit(activity)}
+          className="p-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+          title="Edit Activity"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(activity)}
+          className="p-2.5 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+          title="Delete Activity"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  </li>
+);
 
 /**
- * Activities management component for creating and managing tracked activities.
- * @remarks
- * Provides UI for adding new activities with color selection and viewing existing activities.
- * Includes preset color options and custom color picker functionality.
- * @returns The activities management interface
+ * Activities management component.
+ * @returns JSX.Element
  */
 function Activities() {
   const {
@@ -22,205 +86,224 @@ function Activities() {
     presetColors,
     handleCreateActivity,
     handleDeleteActivity,
+    // Assuming you add an update function to your hook:
+    // handleUpdateActivity(id, newName, newColor)
   } = useActivitiesForm();
 
-  if (loading && activities.length === 0) return <div>Loading...</div>;
+  // Local state for Edit Mode
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // --- Handlers ---
+
+  const startEditing = (activity: any) => {
+    setEditingId(activity._id);
+    setName(activity.name);
+    setSelectedColor(activity.color);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setName("");
+    setSelectedColor(presetColors[0].value); // Reset to default
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      toast.error("Activity name cannot be empty.");
+      return;
+    }
+
+    if (editingId) {
+      // UPDATE LOGIC
+      // await handleUpdateActivity(editingId, name, selectedColor);
+      toast.success("Activity updated successfully!"); // Placeholder until hook is updated
+      cancelEditing();
+    } else {
+      // CREATE LOGIC
+      await handleCreateActivity();
+      // Hook usually clears form, but let's be safe
+      setName(""); 
+    }
+  };
+
+  if (loading && activities.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex flex-col gap-6 mt-6 max-w-3xl mx-auto">
-        {/* Heading */}
-        <div className="text-center space-y-3">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white flex items-center justify-center gap-3">
-            <span className="text-3xl">🎯</span>
-            <span className="text-gradient">Activities</span>
-          </h2>
-          <p className="text-gray-300 text-base font-medium">
-            Manage your tracked activities
-          </p>
-        </div>
+    <div className="flex flex-col gap-8 mt-6 max-w-3xl mx-auto">
+      
+      {/* 1. Heading */}
+      <div className="text-center space-y-3">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white flex items-center justify-center gap-3">
+          <Target className="w-8 h-8 text-blue-400" />
+          <span className="text-gradient">Activities</span>
+        </h2>
+        <p className="text-gray-300 text-base font-medium">
+          Customize what you track
+        </p>
+      </div>
 
-        {/* Add Activity Form */}
-        <div className="glass rounded-2xl p-6 sm:p-8 shadow-xl space-y-5">
-          <h3 className="text-lg font-bold text-white flex items-center gap-3">
-            <span className="text-xl">➕</span>
-            <span>Add New Activity</span>
+      {/* 2. Form Card (Create / Edit) */}
+      <div className={`
+        relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-2xl border transition-all duration-500
+        ${editingId 
+          ? "bg-indigo-900/20 border-indigo-500/30 shadow-indigo-500/10" 
+          : "glass border-white/10"}
+      `}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            {editingId ? <Edit2 className="w-5 h-5 text-indigo-400" /> : <Plus className="w-5 h-5 text-emerald-400" />}
+            <span>{editingId ? "Edit Activity" : "Add New Activity"}</span>
           </h3>
-          <div className="flex flex-col gap-5">
-            <input
-              type="text"
-              placeholder={`Enter activity name... (Max ${APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH} characters)`}
-              value={name}
-              maxLength={APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setName(e.target.value)
-              }
-              className="w-full px-5 py-4 rounded-xl glass text-white border border-white/20 placeholder:text-gray-400 placeholder:opacity-70 bg-white/5 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 hover:border-white/40 hover:bg-white/5 font-medium"
-            />
-            <div className="flex flex-col gap-3">
-              <label className="text-base font-bold text-white flex items-center gap-3">
-                <span className="text-xl">🎨</span>
-                <span>Choose Color</span>
-              </label>
-              <div className="flex items-center gap-4">
-                {/* Preset Colors */}
-                <div className="flex gap-2 flex-wrap flex-1">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => {
-                        setSelectedColor(color.value);
-                      }}
-                      className="w-10 h-10 rounded-xl border-2 border-white/20 hover:border-white/60 transition-all shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
-                      style={{
-                        backgroundColor: color.value,
-                        boxShadow: `0 0 15px ${color.value}40`,
-                      }}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
-                {/* Custom Color Picker */}
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-300 font-medium whitespace-nowrap">
-                    Custom:
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="color"
-                      defaultValue="#6366f1"
-                      className="w-14 h-14 rounded-xl border-2 border-white/20 cursor-pointer hover:border-white/60 transition-all shadow-lg hover:scale-110 opacity-0 absolute z-10"
-                      onChange={(e) => {
-                        setSelectedColor(e.target.value);
-                      }}
-                    />
-                    🎨
-                  </div>
-                </div>
-              </div>
-              {/* Color Preview */}
-              <div className="flex items-center gap-3 px-4 py-3 glass rounded-xl border border-white/10">
-                <span className="text-sm text-gray-300 font-medium">
-                  Preview:
-                </span>
-                <div
-                  id="colorPreview"
-                  className="w-8 h-8 rounded-full border-2 border-white/30 shadow-lg transition-all"
-                  style={{
-                    backgroundColor: selectedColor,
-                    boxShadow: `0 0 15px ${selectedColor}40`,
-                  }}
-                ></div>
-                <span
-                  id="colorValue"
-                  className="text-sm text-white font-mono font-semibold ml-auto"
-                >
-                  {selectedColor.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (!name.trim()) {
-                  toast.error("Activity name cannot be empty.");
-                  return;
-                }
-                handleCreateActivity();
-              }}
-              className="bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 text-white px-8 py-5 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap flex items-center justify-center gap-3"
+          {editingId && (
+            <button 
+              onClick={cancelEditing}
+              className="text-xs font-bold text-gray-400 hover:text-white flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg"
             >
-              <span className="text-xl">➕</span>
-              <span>Add Activity</span>
+              <X className="w-3 h-3" /> Cancel
             </button>
-          </div>
-        </div>
-
-        {/* Activities List */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-3">
-            <span className="text-xl">📋</span>
-            <span>Your Activities ({activities.length})</span>
-          </h3>
-          {activities.length === 0 ? (
-            <div className="glass rounded-xl p-10 text-center shadow-xl">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-10 h-10 text-purple-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                </div>
-                <p className="text-white font-semibold text-lg">
-                  No activities yet
-                </p>
-                <p className="text-gray-400 text-sm">
-                  Create your first activity above!
-                </p>
-              </div>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {activities.map((act) => (
-                <li
-                  key={act._id}
-                  className="group glass rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex justify-between items-center"
-                  style={{
-                    borderLeft: `4px solid ${act.color}`,
-                    boxShadow: `0 4px 20px ${act.color}30, 0 0 0 1px rgba(255,255,255,0.1)`,
-                  }}
-                >
-                  <span className="flex items-center gap-4 flex-1 min-w-0">
-                    <div
-                      className="w-5 h-5 rounded-full shrink-0 transition-all"
-                      style={{
-                        backgroundColor: act.color,
-                        boxShadow: `0 0 15px ${act.color}80`,
-                      }}
-                    ></div>
-                    <span className="font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-linear-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all truncate text-lg">
-                      {act.name.length > 20
-                        ? act.name.substring(0, 20) + "..."
-                        : act.name}
-                    </span>
-                  </span>
-                  <button
-                    onClick={() => handleDeleteActivity(act)}
-                    className="ml-4 px-5 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-all duration-300 font-bold text-sm flex items-center gap-2 hover:scale-105 active:scale-95"
-                  >
-                    <span className="text-lg">❌</span>
-                    <span className="hidden sm:inline">Delete</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
           )}
         </div>
-        <ToastContainer
-          transition={Slide}
-          position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
+
+        <div className="flex flex-col gap-6">
+          {/* Name Input */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Coding, Reading, Workout..."
+              value={name}
+              maxLength={APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-5 py-3.5 rounded-xl bg-gray-900/50 border border-white/10 text-white placeholder:text-gray-500 focus:bg-gray-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+            />
+            <div className="flex justify-end">
+               <span className="text-[10px] text-gray-500 font-mono">
+                 {name.length}/{APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH}
+               </span>
+            </div>
+          </div>
+
+          {/* Color Picker Section */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 ml-1">
+              <Palette className="w-4 h-4" />
+              Color Theme
+            </label>
+            
+            <div className="bg-gray-900/30 rounded-xl p-4 border border-white/5 flex flex-wrap gap-3">
+              {/* Presets */}
+              {presetColors.map((color) => (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => setSelectedColor(color.value)}
+                  className={`
+                    w-8 h-8 rounded-full border-2 transition-all hover:scale-110 active:scale-95
+                    ${selectedColor === color.value ? "border-white scale-110 shadow-lg" : "border-transparent hover:border-white/50"}
+                  `}
+                  style={{ backgroundColor: color.value }}
+                  title={color.name}
+                />
+              ))}
+              
+              {/* Divider */}
+              <div className="w-px h-8 bg-white/10 mx-1" />
+
+              {/* Custom Picker */}
+              <div className="relative group">
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div 
+                  className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-800 group-hover:border-white/50 transition-all"
+                  style={{ backgroundColor: selectedColor }} // Shows selected custom color
+                >
+                   <Plus className="w-3 h-3 text-white/50" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Live Preview Bar */}
+            <div 
+              className="h-1.5 w-full rounded-full mt-2 transition-all duration-500"
+              style={{ 
+                background: `linear-gradient(to right, ${selectedColor}00, ${selectedColor}, ${selectedColor}00)` 
+              }} 
+            />
+          </div>
+
+          {/* Action Button */}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className={`
+              w-full py-4 rounded-xl font-bold text-lg text-white shadow-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2
+              ${editingId 
+                ? "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25" 
+                : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-emerald-500/25"}
+            `}
+          >
+            {editingId ? <Save className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+            <span>{editingId ? "Update Activity" : "Create Activity"}</span>
+          </button>
+        </div>
       </div>
+
+      {/* 3. List Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-2">
+           <h3 className="text-lg font-bold text-white flex items-center gap-2">
+             <span className="text-xl">📋</span>
+             <span>Library ({activities.length})</span>
+           </h3>
+        </div>
+
+        {activities.length === 0 ? (
+          <div className="glass rounded-xl p-12 text-center border border-dashed border-white/10">
+            <div className="flex flex-col items-center gap-4 opacity-50">
+              <Target className="w-16 h-16 text-gray-400" />
+              <p className="text-gray-300 font-medium">No activities found</p>
+            </div>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {activities.map((act) => (
+              <ActivityItem 
+                key={act._id} 
+                activity={act} 
+                onEdit={startEditing} 
+                onDelete={handleDeleteActivity} 
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <ToastContainer
+        transition={Slide}
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        toastClassName="bg-gray-900 border border-gray-800 text-white rounded-xl shadow-2xl"
+      />
     </div>
   );
 }

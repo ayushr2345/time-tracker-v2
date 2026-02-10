@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { activityLogService } from "../../services";
-import type { ActivityLogEntry } from "../../types/activityLog";
+import type {
+  ActivityLogEntry,
+  ActivityLogsWithDetails,
+} from "../../types/activityLog";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "./useActivities";
-import { HTTP_STATUS } from "../../constants";
+import { APP_CONFIG, HTTP_STATUS } from "../../constants";
 
 /**
  * Custom hook for managing activity logs and timer operations.
@@ -27,8 +30,33 @@ import { HTTP_STATUS } from "../../constants";
  */
 export const useActivityLog = () => {
   const { activities } = useActivities();
-  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogsWithDetails[]>(
+    [],
+  );
   const [loading, setLoading] = useState<boolean>(true);
+
+  /**
+   * Creates a Activity Log Entry with Details (activityName & activityColor)
+   * @param activityId                    - The ID of the activity
+   * @param updatedActivityLog            - The updated log from the backend
+   * @returns ActivityLogEntryWithDetails - The created activity log entry with details
+   */
+  const saveActivityLogEntryWithDetails = (
+    activityId: string,
+    updatedActivityLog: ActivityLogEntry,
+  ) => {
+    const activityName = activities.find((a) => a._id === activityId)?.name;
+    const activityColor = activities.find((a) => a._id === activityId)?.color;
+
+    const updatedActivityLogWithDetails: ActivityLogsWithDetails = {
+      ...updatedActivityLog,
+      activityName: activityName ? activityName : "Activity-Undefined",
+      activityColor: activityColor
+        ? activityColor
+        : APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+    };
+    return updatedActivityLogWithDetails;
+  };
 
   /**
    * Fetches all activity logs from the backend and updates state.
@@ -63,10 +91,14 @@ export const useActivityLog = () => {
         startTime,
         endTime,
       );
-      setActivityLogs((prev) => [savedActivityLog, ...prev]);
-      const activityName = activities.find((a) => a._id === activityId)?.name;
+      const updatedActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        activityId,
+        savedActivityLog,
+      );
+      setActivityLogs((prev) => [updatedActivityLogWithDetails, ...prev]);
+
       toast.success(
-        `Activity Log entry for "${activityName}" and duration ${savedActivityLog.duration} created!`,
+        `Activity Log entry for "${updatedActivityLogWithDetails.activityName}" and duration ${savedActivityLog.duration} created!`,
       );
       return savedActivityLog;
     } catch (error) {
@@ -100,9 +132,14 @@ export const useActivityLog = () => {
         activityId,
         startTime,
       );
-      setActivityLogs((prev) => [startTimerLog, ...prev]);
-      const activityName = activities.find((a) => a._id === activityId)?.name;
-      toast.success(`Started timer for "${activityName}"!`);
+      const startTimerActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        activityId,
+        startTimerLog,
+      );
+      setActivityLogs((prev) => [startTimerActivityLogWithDetails, ...prev]);
+      toast.success(
+        `Started timer for "${startTimerActivityLogWithDetails.activityName}"!`,
+      );
       return startTimerLog;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -135,14 +172,18 @@ export const useActivityLog = () => {
         activityLogId,
         endTime,
       );
-      setActivityLogs((prev) =>
-        prev.map((log) => (log._id === activityLogId ? endTimerLog : log)),
+      const endTimerActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        endTimerLog.activityId,
+        endTimerLog,
       );
-      const activityName = activities.find(
-        (a) => a._id === endTimerLog.activityId,
-      )?.name;
+      setActivityLogs((prev) =>
+        prev.map((log) =>
+          log._id === activityLogId ? endTimerActivityLogWithDetails : log,
+        ),
+      );
+
       toast.success(
-        `Stopped timer for "${activityName}". Logged ${endTimerLog.duration}s.`,
+        `Stopped timer for "${endTimerActivityLogWithDetails.activityName}". Logged ${endTimerLog.duration}s.`,
       );
       return endTimerLog;
     } catch (error) {
@@ -172,13 +213,18 @@ export const useActivityLog = () => {
   const pauseTimer = async (activityLogId: string) => {
     try {
       const updatedLog = await activityLogService.pauseTimer(activityLogId);
-      setActivityLogs((prev) =>
-        prev.map((log) => (log._id === activityLogId ? updatedLog : log)),
+      const updateActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        updatedLog.activityId,
+        updatedLog,
       );
-      const activityName = activities.find(
-        (a) => a._id === updatedLog.activityId,
-      )?.name;
-      toast.success(`Paused timer for "${activityName}"`);
+      setActivityLogs((prev) =>
+        prev.map((log) =>
+          log._id === activityLogId ? updateActivityLogWithDetails : log,
+        ),
+      );
+      toast.success(
+        `Paused timer for "${updateActivityLogWithDetails.activityName}"`,
+      );
       return updatedLog;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -207,13 +253,18 @@ export const useActivityLog = () => {
   const resumeTimer = async (activityLogId: string) => {
     try {
       const updatedLog = await activityLogService.resumeTimer(activityLogId);
-      setActivityLogs((prev) =>
-        prev.map((log) => (log._id === activityLogId ? updatedLog : log)),
+      const updateActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        updatedLog.activityId,
+        updatedLog,
       );
-      const activityName = activities.find(
-        (a) => a._id === updatedLog.activityId,
-      )?.name;
-      toast.success(`Resumed timer for "${activityName}"`);
+      setActivityLogs((prev) =>
+        prev.map((log) =>
+          log._id === activityLogId ? updateActivityLogWithDetails : log,
+        ),
+      );
+      toast.success(
+        `Resumed timer for "${updateActivityLogWithDetails.activityName}"`,
+      );
       return updatedLog;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -242,8 +293,14 @@ export const useActivityLog = () => {
   const sendHeartbeat = async (activityLogId: string) => {
     try {
       const updatedLog = await activityLogService.sendHeartbeat(activityLogId);
+      const updateActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        updatedLog.activityId,
+        updatedLog,
+      );
       setActivityLogs((prev) =>
-        prev.map((log) => (log._id === activityLogId ? updatedLog : log)),
+        prev.map((log) =>
+          log._id === activityLogId ? updateActivityLogWithDetails : log,
+        ),
       );
       return updatedLog;
     } catch (error) {
@@ -310,9 +367,14 @@ export const useActivityLog = () => {
     try {
       const fixedLog =
         await activityLogService.resumeCrashedTimer(activityLogId);
-
+      const updateActivityLogWithDetails = saveActivityLogEntryWithDetails(
+        fixedLog.activityId,
+        fixedLog,
+      );
       setActivityLogs((prev) =>
-        prev.map((log) => (log._id === activityLogId ? fixedLog : log)),
+        prev.map((log) =>
+          log._id === activityLogId ? updateActivityLogWithDetails : log,
+        ),
       );
 
       return fixedLog;

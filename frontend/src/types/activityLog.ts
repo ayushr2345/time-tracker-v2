@@ -74,3 +74,16 @@ export interface ActivityLogEntry {
    */
   lastHeartbeat: Date;
 }
+
+/**
+ * An extended ActivityLogEntry object that includes activity name and color.
+ * Used primarily in Activity Logs component to display name and color
+ * @extends ActivityLogEntry
+ */
+export interface ActivityLogsWithDetails extends ActivityLogEntry {
+  /** * The name and color associated with the activity.
+   * @readonly Returned via controller (not stored in DB).
+   */
+  activityName: string;
+  activityColor: string;
+}

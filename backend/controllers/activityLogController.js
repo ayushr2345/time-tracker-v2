@@ -24,7 +24,44 @@ import { APP_CONFIG, HTTP_STATUS } from "../constants.js";
  */
 export const getActivityLogs = async (req, res) => {
   try {
-    const activityLogs = await ActivityLog.find().sort({ startTime: -1 });
+    const activityLogs = await ActivityLog.aggregate([
+      // 1. Sort first (Latest logs first)
+      { $sort: { startTime: -1 } },
+
+      // 2. Join with 'activities' collection
+      {
+        $lookup: {
+          from: "activities", // <--- The collection with Names/Colors
+          localField: "activityId", // Field in ActivityLog
+          foreignField: "_id", // Field in Activity
+          as: "activityInfo", // Temporary name for the joined data (returns an Array)
+        },
+      },
+
+      // 3. Unwind (Flatten) the array to get a single object
+      {
+        $unwind: {
+          path: "$activityInfo",
+          preserveNullAndEmptyArrays: true, // Keep the log even if the Activity was deleted
+        },
+      },
+
+      // 4. Move specific fields to the top level
+      {
+        $addFields: {
+          activityName: "$activityInfo.name",
+          activityColor: "$activityInfo.color",
+        },
+      },
+
+      // 5. Cleanup (Remove the temporary object and version key)
+      {
+        $project: {
+          activityInfo: 0,
+          __v: 0,
+        },
+      },
+    ]);
     res.status(HTTP_STATUS.OK).json(activityLogs);
   } catch (error) {
     console.error("Error fetching activity logs:", error);

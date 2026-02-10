@@ -6,15 +6,17 @@
  */
 import apiClient from "./apiClient";
 import type { ActivityLogEntry } from "../types/activityLog";
+import type { ActivityLogsWithDetails } from "../types/activityLog";
 
 export const activityLogService = {
   /**
    * Fetches all activity logs from the backend.
    *
-   * @returns {Promise<ActivityLogEntry[]>} A promise resolving to an array of all activity log entries.
+   * @returns {Promise<ActivityLogsWithDetails[]>} A promise resolving to an array of all activity log entries
+   *                                               along with their name and color.
    */
-  getAllActivityLogs: async (): Promise<ActivityLogEntry[]> => {
-    const response = await apiClient.get<ActivityLogEntry[]>(
+  getAllActivityLogs: async (): Promise<ActivityLogsWithDetails[]> => {
+    const response = await apiClient.get<ActivityLogsWithDetails[]>(
       "/activity-logs/getActivityLogs",
     );
     return response.data;

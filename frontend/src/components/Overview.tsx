@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import {
   BarChart,
@@ -12,16 +12,144 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import type { Activity } from "../types/activity";
-import type { ActivityLogEntry } from "../types/activityLog";
+import { Coffee, Hammer, Zap, Flame, Trophy, Clock, Calendar, Activity } from "lucide-react";
 import { useOverview } from "../hooks/logic/useOverview";
+import LoadingSpinner from "./LoadingSpinner";
+
+// --- SUB-COMPONENT: HEATMAP ---
+// --- SUB-COMPONENT: HEATMAP ---
+const ActivityHeatmap = ({ logs }: { logs: any[] }) => {
+  // 1. Generate Data for the last 365 days
+  const heatmapData = useMemo(() => {
+    const map = new Map();
+
+    // Aggregate durations by date
+    logs.forEach((log) => {
+      if (log.status === "completed") {
+        const dateKey = new Date(log.startTime).toLocaleDateString("en-CA");
+        const current = map.get(dateKey) || 0;
+        map.set(dateKey, current + (log.duration || 0));
+      }
+    });
+
+    // Generate grid (approx 52 weeks)
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 364); // Go back 1 year
+    
+    // Align to Sunday
+    const dayOfWeek = startDate.getDay();
+    startDate.setDate(startDate.getDate() - dayOfWeek);
+
+    const data = [];
+    const end = new Date();
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= end) {
+      const dateKey = currentDate.toLocaleDateString("en-CA");
+      const duration = map.get(dateKey) || 0;
+      
+      data.push({
+        date: dateKey,
+        value: duration,
+        intensity: getIntensity(duration),
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return data;
+  }, [logs]);
+
+  function getIntensity(seconds: number) {
+    if (seconds === 0) return 0;
+    const hours = seconds / 3600;
+    if (hours < 1) return 1;
+    if (hours < 3) return 2;
+    if (hours < 6) return 3;
+    return 4;
+  }
+
+  function getColor(intensity: number) {
+    switch (intensity) {
+      case 0: return "bg-white/5 border-transparent";
+      case 1: return "bg-indigo-900/40 border-indigo-500/20";
+      case 2: return "bg-indigo-700/60 border-indigo-500/40";
+      case 3: return "bg-indigo-500 border-indigo-400/50";
+      case 4: return "bg-cyan-400 border-cyan-200 shadow-[0_0_10px_rgba(34,211,238,0.5)]";
+      default: return "bg-white/5";
+    }
+  }
+
+  // Group by weeks
+  const weeks = [];
+  let currentWeek = [];
+  heatmapData.forEach((day, index) => {
+    currentWeek.push(day);
+    if (currentWeek.length === 7 || index === heatmapData.length - 1) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  });
+
+  return (
+    <div className="w-full overflow-x-auto custom-scrollbar pb-2">
+      <div className="min-w-[700px]">
+        <div className="flex gap-1">
+           {weeks.map((week, wIndex) => (
+             <div key={wIndex} className="flex flex-col gap-1">
+               {week.map((day, dIndex) => {
+                 // SMART POSITIONING LOGIC
+                 // 1. Vertical: If in top 3 rows, show tooltip BELOW. Else ABOVE.
+                 const isTopRow = dIndex < 3;
+                 const verticalClass = isTopRow ? "top-full mt-2" : "bottom-full mb-2";
+                 
+                 // 2. Horizontal: If far left, align left. If far right, align right. Else center.
+                 const isFarLeft = wIndex < 5;
+                 const isFarRight = wIndex > weeks.length - 5;
+                 let horizontalClass = "left-1/2 -translate-x-1/2"; // Default Center
+                 if (isFarLeft) horizontalClass = "left-0 translate-x-0";
+                 if (isFarRight) horizontalClass = "right-0 translate-x-0";
+
+                 return (
+                   <div
+                     key={day.date}
+                     className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-sm border ${getColor(day.intensity)} transition-all hover:scale-125 hover:z-20 relative group`}
+                   >
+                     {/* Tooltip */}
+                     <div className={`absolute ${verticalClass} ${horizontalClass} w-max hidden group-hover:block z-30 pointer-events-none`}>
+                       <div className="bg-gray-900 text-[10px] text-white px-2 py-1 rounded-md border border-white/10 shadow-xl whitespace-nowrap z-50">
+                         <span className="font-bold text-gray-400">{day.date}</span>
+                         <span className="mx-1 text-gray-600">|</span>
+                         <span className="text-indigo-300 font-bold">{(day.value / 3600).toFixed(1)}h</span>
+                       </div>
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+           ))}
+        </div>
+        
+        {/* Legend */}
+        <div className="flex items-center justify-end gap-2 mt-4 text-xs text-gray-400">
+           <span>Less</span>
+           <div className="flex gap-1">
+             <div className="w-3 h-3 rounded-sm bg-white/5"></div>
+             <div className="w-3 h-3 rounded-sm bg-indigo-900/40"></div>
+             <div className="w-3 h-3 rounded-sm bg-indigo-700/60"></div>
+             <div className="w-3 h-3 rounded-sm bg-indigo-500"></div>
+             <div className="w-3 h-3 rounded-sm bg-cyan-400"></div>
+           </div>
+           <span>More</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 /**
  * Overview component displaying time tracking statistics and charts.
- * @remarks
- * Shows time spent per activity with bar and pie charts for the current week.
- * Displays time summaries for different periods (today, week, month, year).
- * @returns JSX.Element  - The overview dashboard with charts and statistics
+ * @returns JSX.Element
  */
 function Overview() {
   const {
@@ -29,7 +157,6 @@ function Overview() {
     activityLogs,
     activitiesLoading,
     activityLogsLoading,
-    chartColors,
     formatTime,
     sumLogsByPeriod,
     chartData,
@@ -38,61 +165,54 @@ function Overview() {
 
   const isLoadingOverview = activitiesLoading || activityLogsLoading;
 
+  // --- HELPER: Icon & Color Logic (Gamification) ---
+  const getTier = (secs) => {
+    if (secs >= 36000) return { icon: Trophy, color: "text-yellow-400", label: "GOD TIER" };
+    if (secs >= 14400) return { icon: Flame, color: "text-orange-500", label: "ON FIRE" };
+    if (secs >= 7200) return { icon: Zap, color: "text-cyan-400", label: "IN THE ZONE" };
+    if (secs >= 3600) return { icon: Hammer, color: "text-emerald-400", label: "FOCUSED" };
+    return { icon: Coffee, color: "text-gray-400", label: "WARMUP" };
+  };
+
+  // --- HELPER: Date Formatter ---
+  const formatDate = (dateString) => {
+    if (!dateString) return "Now";
+    return new Date(dateString).toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
   return (
-    <div className="space-y-8 sm:space-y-10 px-2 sm:px-4 py-4 sm:py-6">
+    <div className="space-y-8 sm:space-y-12">
       {isLoadingOverview ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500/30 border-t-purple-500 border-solid"></div>
-            <div
-              className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-blue-500 border-solid"
-              style={{
-                animationDirection: "reverse",
-                animationDuration: "1s",
-              }}
-            ></div>
-          </div>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <LoadingSpinner />
         </div>
       ) : (
         <>
-          {/* 1. Time Spent per Activity */}
+          {/* 1. Time Spent per Activity Cards */}
           <section className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-                <span className="text-2xl">📊</span>
-                <span className="text-gradient">Time Spent per Activity</span>
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white flex items-center justify-center gap-3">
+                <span className="text-3xl">📊</span>
+                <span className="text-gradient">Activity Breakdown</span>
               </h2>
-              <span className="text-sm text-gray-300 font-medium glass px-4 py-2 rounded-xl">
-                This Week
-              </span>
+              <p className="text-gray-300 text-base font-medium">This Week</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {isLoadingOverview ? (
-                <div className="h-32 w-full col-span-full flex justify-center items-center">
-                  <span className="text-gray-400">Loading...</span>
-                </div>
-              ) : activities.length === 0 ? (
-                <div className="col-span-full w-full flex items-center justify-center p-10 glass rounded-2xl shadow-xl">
-                  <div className="flex flex-col items-center justify-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-10 h-10 text-purple-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {activities.length === 0 ? (
+                <div className="col-span-full py-12 glass rounded-2xl shadow-xl flex flex-col items-center justify-center gap-4 text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
+                    <BarChart className="w-8 h-8 text-gray-500" />
+                  </div>
+                  <div>
                     <p className="text-white font-semibold text-lg">
-                      No activities found for this week
+                      No activities found
                     </p>
                     <p className="text-gray-400 text-sm">
                       Add activities to start tracking!
@@ -105,37 +225,35 @@ function Overview() {
                     (log) => log.activityId === activity._id,
                   );
                   const totalTime = sumLogsByPeriod(thisActivityLogs, "week");
-                  console.log(activity.name, totalTime);
 
                   return (
                     <div
                       key={activity._id}
-                      className="group relative overflow-hidden glass rounded-2xl p-6 shadow-xl transition-all duration-300 hover:scale-[1.05] hover:shadow-2xl"
-                      style={{
-                        borderLeft: `4px solid ${activity.color}`,
-                        boxShadow: `0 4px 20px ${activity.color}30, 0 0 0 1px rgba(255,255,255,0.1)`,
-                      }}
+                      className="group relative overflow-hidden glass rounded-2xl p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl border border-white/5"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all">
+                      {/* Left Color Indicator */}
+                      <div
+                        className="absolute left-0 top-0 bottom-0 w-1.5"
+                        style={{ backgroundColor: activity.color }}
+                      />
+
+                      <div className="relative z-10 pl-2">
+                        <div className="flex justify-between items-start mb-4">
+                          <h3 className="text-xl font-bold text-white truncate pr-2">
                             {activity.name}
                           </h3>
                           <div
-                            className="w-5 h-5 rounded-full shadow-lg transition-all"
-                            style={{
-                              backgroundColor: activity.color,
-                              boxShadow: `0 0 15px ${activity.color}80`,
-                            }}
-                          ></div>
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg text-xs font-bold text-white/90"
+                            style={{ backgroundColor: activity.color }}
+                          >
+                            {activity.name.charAt(0)}
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-gray-400 text-sm font-medium flex items-center gap-2">
-                            <span className="text-base">⏱️</span>
-                            <span>Total This Week</span>
+                        <div className="space-y-1">
+                          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
+                            Total This Week
                           </p>
-                          <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+                          <p className="text-3xl font-mono font-bold text-white">
                             {formatTime(totalTime)}
                           </p>
                         </div>
@@ -147,7 +265,7 @@ function Overview() {
             </div>
           </section>
 
-          {/* 2. Weekly Analytics */}
+          {/* 2. Charts Section */}
           <section className="space-y-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center gap-3">
               <span className="text-2xl">📈</span>
@@ -155,72 +273,49 @@ function Overview() {
             </h2>
 
             {isChartDataEmpty(chartData) ? (
-              <div className="glass text-white p-10 rounded-2xl text-center shadow-xl">
+              <div className="glass p-12 rounded-2xl text-center shadow-xl border border-white/5">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-10 h-10 text-blue-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
+                  <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
+                    <PieChart className="w-8 h-8 text-gray-500" />
                   </div>
-                  <p className="font-semibold text-lg">
-                    No data available for weekly charts
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    Start tracking activities to see analytics
+                  <p className="text-gray-300 font-medium">
+                    No data available for charts yet.
                   </p>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Bar Chart */}
-                <div className="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-                  <h3 className="text-white font-bold mb-5 text-lg flex items-center gap-3">
-                    <span className="text-xl">📊</span>
-                    <span>Hours Spent Per Activity</span>
+                <div className="glass rounded-2xl p-6 shadow-xl border border-white/5">
+                  <h3 className="text-white font-bold mb-6 text-lg flex items-center gap-2">
+                    <BarChart className="w-5 h-5 text-indigo-400" />
+                    <span>Hours per Activity</span>
                   </h3>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={chartData}>
-                      <XAxis
-                        dataKey="name"
-                        stroke="#9ca3af"
-                        tick={{
-                          fill: "#d1d5db",
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                        axisLine={{ stroke: "#4b5563" }}
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#9ca3af" 
+                        tick={{ fill: "#9ca3af", fontSize: 10 }} 
+                        interval={0} 
                       />
-                      <YAxis
-                        stroke="#9ca3af"
-                        tick={{
-                          fill: "#d1d5db",
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                        axisLine={{ stroke: "#4b5563" }}
+                      <YAxis 
+                        stroke="#9ca3af" 
+                        tick={{ fill: "#9ca3af", fontSize: 10 }} 
                       />
                       <Tooltip
+                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
                         contentStyle={{
-                          backgroundColor: "rgba(15, 23, 42, 0.95)",
-                          border: "1px solid rgba(255, 255, 255, 0.2)",
+                          backgroundColor: "#1f2937",
+                          borderColor: "rgba(255,255,255,0.1)",
                           borderRadius: "12px",
-                          backdropFilter: "blur(10px)",
-                          color: "#e2e8f0",
+                          color: "#f3f4f6",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)"
                         }}
-                        cursor={{ fill: "rgba(147, 51, 234, 0.1)" }}
+                        itemStyle={{ color: "#e5e7eb" }}
+                        labelStyle={{ color: "#9ca3af", marginBottom: '0.5rem' }}
                       />
-                      <Bar dataKey="time" radius={[8, 8, 0, 0]}>
+                      <Bar dataKey="time" radius={[6, 6, 0, 0]}>
                         {chartData.map((entry, index) => (
                           <Cell key={`bar-${index}`} fill={entry.color} />
                         ))}
@@ -230,10 +325,10 @@ function Overview() {
                 </div>
 
                 {/* Pie Chart */}
-                <div className="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
-                  <h3 className="text-white font-bold mb-5 text-lg flex items-center gap-3">
-                    <span className="text-xl">🥧</span>
-                    <span>Time Distribution</span>
+                <div className="glass rounded-2xl p-6 shadow-xl border border-white/5">
+                  <h3 className="text-white font-bold mb-6 text-lg flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-purple-400" />
+                    <span>Distribution</span>
                   </h3>
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
@@ -242,31 +337,27 @@ function Overview() {
                         dataKey="time"
                         nameKey="name"
                         outerRadius={100}
-                        label={({ name, percent }) =>
-                          `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                        }
-                        labelLine={false}
+                        innerRadius={60}
+                        paddingAngle={5}
+                        stroke="none"
                       >
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{
-                          backgroundColor: "rgba(15, 23, 42, 0.95)",
-                          border: "1px solid rgba(255, 255, 255, 0.2)",
+                         contentStyle={{
+                          backgroundColor: "#1f2937",
+                          borderColor: "rgba(255,255,255,0.1)",
                           borderRadius: "12px",
-                          backdropFilter: "blur(10px)",
-                          color: "#e2e8f0",
+                          color: "#f3f4f6",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)"
                         }}
+                        itemStyle={{ color: "#e5e7eb" }}
                       />
-                      <Legend
-                        wrapperStyle={{
-                          color: "#d1d5db",
-                          fontSize: "12px",
-                          fontWeight: 500,
-                        }}
-                        iconType="circle"
+                      <Legend 
+                        iconType="circle" 
+                        wrapperStyle={{ fontSize: "12px", color: "#9ca3af" }} 
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -275,207 +366,116 @@ function Overview() {
             )}
           </section>
 
-          {/* 3. Time Summary + Recent Logs */}
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-            {/* Time Summary */}
-            <div className="space-y-4 flex flex-col h-full">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-                <span className="text-2xl">⏱️</span>
+          {/* 3. Bottom Grid: Summary & Recent Logs */}
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* LEFT: Time Summary */}
+            <div className="space-y-6 flex flex-col h-full">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <Clock className="w-6 h-6 text-blue-400" />
                 <span className="text-gradient">Time Summary</span>
               </h2>
-              <div className="grid grid-cols-1 gap-4 flex-1 content-start">
-                {isLoadingOverview ? (
-                  <div className="h-24 w-full glass rounded-xl animate-pulse" />
-                ) : activities.length === 0 ? (
-                  <div className="flex items-center justify-center p-10 glass rounded-xl shadow-xl flex-1 min-h-[200px]">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-10 h-10 text-purple-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
+
+              <div className="grid grid-cols-1 gap-4 flex-1">
+                {[
+                  { label: "Today", value: sumLogsByPeriod(activityLogs, "today"), grad: "from-blue-500/20 to-blue-600/5", border: "border-blue-500/20", icon: "🌅" },
+                  { label: "This Week", value: sumLogsByPeriod(activityLogs, "week"), grad: "from-purple-500/20 to-purple-600/5", border: "border-purple-500/20", icon: "📅" },
+                  { label: "This Month", value: sumLogsByPeriod(activityLogs, "month"), grad: "from-indigo-500/20 to-indigo-600/5", border: "border-indigo-500/20", icon: "🗓️" },
+                  { label: "This Year", value: sumLogsByPeriod(activityLogs, "year"), grad: "from-pink-500/20 to-pink-600/5", border: "border-pink-500/20", icon: "📆" },
+                ].map((item, idx) => (
+                  <div key={idx} className={`relative overflow-hidden bg-gradient-to-r ${item.grad} border ${item.border} p-5 rounded-2xl flex items-center justify-between transition-all hover:scale-[1.02]`}>
+                    <div className="flex items-center gap-4">
+                      <div className="text-2xl">{item.icon}</div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">{item.label}</p>
+                        <p className="text-2xl font-mono font-bold text-white mt-1">{formatTime(item.value)}</p>
                       </div>
-                      <p className="text-white font-semibold text-lg">
-                        No logs found
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        Start tracking to see summary
-                      </p>
                     </div>
                   </div>
-                ) : (
-                  [
-                    {
-                      label: "Today",
-                      value: sumLogsByPeriod(activityLogs, "today"),
-                      gradient: "from-blue-500 via-blue-600 to-cyan-500",
-                      icon: "🌅",
-                    },
-                    {
-                      label: "This Week",
-                      value: sumLogsByPeriod(activityLogs, "week"),
-                      gradient: "from-purple-500 via-purple-600 to-pink-500",
-                      icon: "📅",
-                    },
-                    {
-                      label: "This Month",
-                      value: sumLogsByPeriod(activityLogs, "month"),
-                      gradient: "from-indigo-500 via-indigo-600 to-purple-500",
-                      icon: "📆",
-                    },
-                    {
-                      label: "This Year",
-                      value: sumLogsByPeriod(activityLogs, "year"),
-                      gradient: "from-pink-500 via-pink-600 to-rose-500",
-                      icon: "🗓️",
-                    },
-                    {
-                      label: "Previous Year",
-                      value: sumLogsByPeriod(activityLogs, "prevYear"),
-                      gradient: "from-rose-500 via-rose-600 to-purple-500",
-                      icon: "🗓️",
-                    },
-                  ].map((item, idx) => (
-                    <div
-                      key={idx}
-                      className={`group relative overflow-hidden bg-gradient-to-br ${item.gradient} p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.05]`}
-                    >
-                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                      <div className="relative z-10 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-white/90 font-semibold flex items-center gap-2 mb-2">
-                            <span className="text-base">{item.icon}</span>
-                            <span>{item.label}</span>
-                          </p>
-                          <p className="text-3xl font-extrabold text-white">
-                            {formatTime(item.value)}
-                          </p>
-                        </div>
-                        <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <span className="text-2xl">{item.icon}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
+                ))}
               </div>
             </div>
 
-            {/* Recent Logs */}
-            <div className="space-y-4 flex flex-col h-full">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-                <span className="text-2xl">📅</span>
+            {/* RIGHT: Recent Logs */}
+            <div className="space-y-6 flex flex-col h-full">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <span className="text-2xl">📝</span>
                 <span className="text-gradient">Recent Logs</span>
               </h2>
-              <div className="glass rounded-xl overflow-hidden shadow-xl flex-1 flex flex-col min-h-0">
-                {isLoadingOverview ? (
-                  <div className="h-12 w-full glass animate-pulse rounded-xl" />
-                ) : activities.length === 0 || activityLogs.length === 0 ? (
-                  <div className="flex items-center justify-center p-10 flex-1">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-10 h-10 text-purple-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                          />
-                        </svg>
-                      </div>
-                      <p className="text-white font-semibold text-lg">
-                        No logs found
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        Start tracking to see recent logs
-                      </p>
+
+              <div className="glass rounded-2xl overflow-hidden shadow-xl flex-1 flex flex-col min-h-[400px] border border-white/5">
+                {activityLogs.length === 0 ? (
+                  <div className="flex items-center justify-center flex-1 text-center p-10 opacity-60">
+                    <div>
+                      <p className="text-white font-semibold">No logs found</p>
+                      <p className="text-gray-500 text-sm">Start tracking to see history</p>
                     </div>
                   </div>
                 ) : (
-                  <ul className="divide-y divide-white/10 flex-1 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
                     {activityLogs
-                      .slice(-5)
-                      .reverse()
+                      .filter((log) => log.status === "completed")
+                      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+                      .slice(0, 5)
                       .map((log) => {
-                        const activity = activities.find(
-                          (a) => a._id === log.activityId,
-                        );
+                        const activity = activities.find((a) => a._id === log.activityId);
+                        const durationSec = log.duration || 0;
+                        const hours = Math.floor(durationSec / 3600);
+                        const minutes = Math.floor((durationSec % 3600) / 60);
+                        const seconds = Math.floor(durationSec % 60);
+                        const formattedDuration = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m ${seconds}s`;
+                        const tier = getTier(durationSec);
+                        const TierIcon = tier.icon;
+                        const activityName = log.activityName || activity?.name || "Unknown";
+                        const activityColor = log.activityColor || activity?.color || "#6366f1";
 
-                        const start = new Date(log.startTime);
-                        const end = log.endTime
-                          ? new Date(log.endTime)
-                          : new Date();
-                        const duration =
-                          (end.getTime() - start.getTime()) / 1000;
                         return (
-                          <li
-                            key={log._id}
-                            className="px-5 sm:px-6 py-9 flex justify-between items-center hover:bg-white/5 hover:scale-[1.05] transition-all duration-300 group"
-                          >
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div
-                                className="w-8 h-8 rounded-full flex-shrink-0 transition-all"
-                                style={{
-                                  backgroundColor: activity?.color || "#6366f1",
-                                  boxShadow: `0 0 12px ${
-                                    activity?.color || "#6366f1"
-                                  }80`,
-                                }}
-                              ></div>
-                              <div className="flex-10 min-w-0 text-left">
-                                <p className="font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 transition-all truncate text-base">
-                                  {activity?.name ?? "Unknown Activity"}
-                                </p>
-                                <p className="text-sm text-gray-400 mt-1.5 flex items-center gap-2">
-                                  <span className="text-base">🕐</span>
-                                  <span>
-                                    {start.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: false,
-                                    })}{" "}
-                                    -{" "}
-                                    {end.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: false,
-                                    })}
-                                  </span>
-                                </p>
+                          <div key={log._id} className="relative group overflow-hidden rounded-2xl bg-gray-900/40 border border-white/5 hover:border-white/10 transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-[1.01]">
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5 transition-all group-hover:w-2" style={{ backgroundColor: activityColor }} />
+                            <div className="p-4 pl-6 flex flex-col gap-3">
+                              <h3 className="font-bold text-lg text-white tracking-wide truncate">{activityName}</h3>
+                              <div className="flex items-end justify-between gap-4">
+                                <div className="flex flex-col gap-1 min-w-[100px]">
+                                  <div className="flex justify-between text-[10px] font-mono text-gray-400">
+                                    <span className="font-bold opacity-50">FROM</span>
+                                    <span className="text-gray-300">{formatDate(log.startTime)}</span>
+                                  </div>
+                                  <div className="flex justify-between text-[10px] font-mono text-gray-400">
+                                    <span className="font-bold opacity-50">TO</span>
+                                    <span className="text-gray-300">{formatDate(log.endTime)}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/5 rounded-lg p-1.5 pl-2 border border-white/5">
+                                  <div className="flex flex-col items-end">
+                                    <span className={`text-[8px] font-black uppercase tracking-widest ${tier.color}`}>{tier.label}</span>
+                                    <span className="text-sm font-bold font-mono text-white leading-none">{formattedDuration}</span>
+                                  </div>
+                                  <div className={`p-1.5 rounded-md bg-gray-800 ${tier.color}`}><TierIcon className="w-4 h-4" /></div>
+                                </div>
                               </div>
                             </div>
-                            <div
-                              className=" min-w-[160px] h-14 flex items-center justify-center px-4 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md shadow-lg transition-all duration-300 
-                                          hover:scale-[1.05] hover:bg-white/10 hover:border-blue-400/30 hover:shadow-blue-500/20 cursor-default"
-                            >
-                              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 tabular-numstracking-tight">
-                                {isNaN(duration)
-                                  ? "Invalid"
-                                  : formatTime(duration)}
-                              </span>
-                            </div>
-                          </li>
+                          </div>
                         );
                       })}
-                  </ul>
+                  </div>
                 )}
               </div>
+            </div>
+          </section>
+
+          {/* 4. ACTIVITY HEATMAP (New Section) */}
+          <section className="space-y-6 pt-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+              <Calendar className="w-6 h-6 text-purple-400" />
+              <span className="text-gradient">Activity Heatmap</span>
+            </h2>
+            <div className="glass rounded-2xl p-6 shadow-xl border border-white/5 overflow-hidden">
+               <div className="mb-4 flex items-center justify-between">
+                 <h3 className="text-gray-300 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                   <Activity className="w-4 h-4 text-emerald-400" />
+                   Past 365 Days
+                 </h3>
+               </div>
+               <ActivityHeatmap logs={activityLogs} />
             </div>
           </section>
         </>
@@ -485,13 +485,3 @@ function Overview() {
 }
 
 export default Overview;
-
-// possible refactors:
-// 1. called formatTime in multiple places - can be moved to a utility file
-// 2. called sumLogsByPeriod in multiple places - can be moved to a utility file
-// 3. similar toasts, buttons overall in the UI - can be abstracted into reusable components
-
-// TODO:
-// 1. Refactor
-// 2. Make use of get data for week/today/etc
-// 3. improve the logic in Overview.tsx as well as useOverview.tsx
