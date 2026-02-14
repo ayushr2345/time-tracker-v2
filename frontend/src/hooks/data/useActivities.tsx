@@ -1,22 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
-import { activityService } from "../../services";
-import type { Activity, ActivityWithLogCount } from "../../types/activity";
-import { toast } from "react-toastify";
 import { AxiosError } from "axios";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import type { Activity, ActivityWithLogCount } from "../../types/activity";
+import { activityService } from "../../services";
 import { HTTP_STATUS } from "../../constants";
 
 /**
  * Custom hook for managing activities data and operations.
  * @remarks
- * Handles fetching, creating, and deleting activities with comprehensive error handling.
- * Provides methods to refetch activities and manage the activities list.
- * @returns Object containing activities state and management methods
- * @returns activities            - Array of all activities with their log count
- * @returns loading               - Loading state
- * @returns refetch               - Function to refetch activities
- * @returns addActivity           - Function to create a new activity
- * @returns deleteActivity        - Function to delete an activity
+ * Handles fetching, creating, updating, and deleting activities with comprehensive error handling.
+ * Provides methods to refetch activities and manage the local activities list state.
+ *
+ * @returns An object containing:
+ * - `activities`: Array of all activities with their log count.
+ * - `loading`: Boolean indicating if data is being fetched.
+ * - `refetch`: Function to manually re-trigger the fetch.
+ * - `addActivity`: Function to create a new activity.
+ * - `deleteActivity`: Function to delete an activity by ID.
+ * - `updateActivity`: Function to update an existing activity.
  */
 export const useActivities = () => {
   const [activities, setActivities] = useState<ActivityWithLogCount[]>([]);
@@ -39,8 +41,8 @@ export const useActivities = () => {
 
   /**
    * Creates a new activity with error handling and state update.
-   * @param newActivity           - Activity data to create (name and color)
-   * @returns boolean             - True if activity was successfully created, false otherwise
+   * @param newActivity - Activity data to create (name and color).
+   * @returns True if activity was successfully created, false otherwise.
    */
   const addActivity = async (newActivity: Omit<Activity, "_id">) => {
     try {
@@ -74,8 +76,8 @@ export const useActivities = () => {
 
   /**
    * Deletes an activity with error handling and state update.
-   * @param activityId            - The ID of the activity to delete
-   * @returns boolean             - True if activity was successfully deleted, false otherwise
+   * @param activityId - The ID of the activity to delete.
+   * @returns True if activity was successfully deleted, false otherwise.
    */
   const deleteActivity = async (activityId: string) => {
     try {
@@ -105,21 +107,18 @@ export const useActivities = () => {
 
   /**
    * Updates an activity with error handling and state update.
-   * @param activity              - The activity type containing updated name and color
-   * @returns boolean             - True if activity was successfully updated, false otherwise
+   * @param activity - The activity object containing updated name and color.
+   * @returns True if activity was successfully updated, false otherwise.
    */
   const updateActivity = async (activity: Activity) => {
     try {
       const updatedActivity = await activityService.updateActivity(activity);
-      const updatedActivityWithLogCount: ActivityWithLogCount = {
-        ...updatedActivity,
-        logCount: 0,
-      };
+      // Note: We preserve the existing logCount since the update endpoint might not return it
       setActivities((prev) =>
-        prev.map((activity) =>
-          activity._id === updatedActivityWithLogCount._id
-            ? updatedActivityWithLogCount
-            : activity,
+        prev.map((a) =>
+          a._id === updatedActivity._id
+            ? { ...updatedActivity, logCount: a.logCount }
+            : a,
         ),
       );
       toast.success("Activity updated successfully.");

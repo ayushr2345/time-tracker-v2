@@ -12,8 +12,8 @@ export const activityLogService = {
   /**
    * Fetches all activity logs from the backend.
    *
-   * @returns {Promise<ActivityLogsWithDetails[]>} A promise resolving to an array of all activity log entries
-   *                                               along with their name and color.
+   * @returns A promise resolving to an array of all activity log entries
+   * along with their name and color.
    */
   getAllActivityLogs: async (): Promise<ActivityLogsWithDetails[]> => {
     const response = await apiClient.get<ActivityLogsWithDetails[]>(
@@ -29,7 +29,7 @@ export const activityLogService = {
    * @param activityId - The unique identifier of the activity to log against.
    * @param startTime  - The Date object representing when the activity started.
    * @param endTime    - The Date object representing when the activity ended.
-   * @returns          - A promise that resolves to the newly created ActivityLogEntry.
+   * @returns A promise that resolves to the newly created ActivityLogEntry.
    */
   createManualLogEntry: async (
     activityId: string,
@@ -50,8 +50,8 @@ export const activityLogService = {
    * Starts a new active timer for a specific activity.
    *
    * @param activityId - The ID of the activity to start tracking.
-   * @param startTime  - Optional: Start time of a log entry (used for split timer)
-   * @returns          - A promise resolving to the new "active" activity log entry.
+   * @param startTime  - (Optional) Start time of a log entry (used for split timer).
+   * @returns A promise resolving to the new "active" activity log entry.
    */
   startTimer: async (
     activityId: string,
@@ -68,8 +68,8 @@ export const activityLogService = {
    * Stops a running timer and marks it as completed.
    *
    * @param activityLogId - The ID of the active log entry to finalize.
-   * @param endTime       - Optional: End time of a log entry (used for split timer)
-   * @returns             - A promise resolving to the completed log entry with the final duration.
+   * @param endTime       - (Optional) End time of a log entry (used for split timer).
+   * @returns A promise resolving to the completed log entry with the final duration.
    */
   stopTimer: async (
     activityLogId: string,
@@ -86,7 +86,7 @@ export const activityLogService = {
    * Pauses a currently running timer.
    *
    * @param activityLogId - The ID of the active log entry to pause.
-   * @returns             - A promise resolving to the updated log entry with status "paused".
+   * @returns A promise resolving to the updated log entry with status "paused".
    */
   pauseTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
     const response = await apiClient.patch<ActivityLogEntry>(
@@ -99,7 +99,7 @@ export const activityLogService = {
    * Resumes a previously paused timer.
    *
    * @param activityLogId - The ID of the paused log entry to resume.
-   * @returns             - A promise resolving to the updated log entry with status "active".
+   * @returns A promise resolving to the updated log entry with status "active".
    */
   resumeTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
     const response = await apiClient.patch<ActivityLogEntry>(
@@ -113,7 +113,7 @@ export const activityLogService = {
    * Used to distinguish between a user who is still working and a browser crash.
    *
    * @param activityLogId - The ID of the active log to update.
-   * @returns             - A promise resolving to the updated log entry.
+   * @returns A promise resolving to the updated log entry.
    */
   sendHeartbeat: async (activityLogId: string): Promise<ActivityLogEntry> => {
     const response = await apiClient.patch<ActivityLogEntry>(
@@ -127,7 +127,7 @@ export const activityLogService = {
    * This is a destructive action (DELETE).
    *
    * @param activityLogId - The ID of the log entry to reset.
-   * @returns             - A promise resolving to the resetted log data.
+   * @returns A promise resolving to the reset log data.
    */
   resetTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
     const response = await apiClient.delete<ActivityLogEntry>(
@@ -141,7 +141,7 @@ export const activityLogService = {
    * Typically resumes the session based on the last known heartbeat or pause state.
    *
    * @param activityLogId - The ID of the crashed log entry to recover.
-   * @returns             - A promise resolving to the recovered log entry.
+   * @returns A promise resolving to the recovered log entry.
    */
   resumeCrashedTimer: async (
     activityLogId: string,
@@ -153,11 +153,11 @@ export const activityLogService = {
   },
 
   /**
-   * Deleted an activity log entry.
+   * Deletes an activity log entry.
    * This is a destructive action (DELETE).
    *
    * @param activityLogId - The ID of the log entry to delete.
-   * @returns             - A promise resolving to the deleted log data.
+   * @returns A promise resolving to the deleted log data.
    */
   deleteLogEntry: async (activityLogId: string): Promise<ActivityLogEntry> => {
     const response = await apiClient.delete<ActivityLogEntry>(

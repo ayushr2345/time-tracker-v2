@@ -1,8 +1,17 @@
+import type { JSX } from "react";
+
 /**
- * Background UI component that renders animated gradient blobs and texture.
- * @returns JSX.Element
+ * A presentational component that renders the application's background visual layer.
+ * @remarks
+ * This component uses fixed positioning (`z-index: -50`) to stay behind all content.
+ * It combines three visual elements to create depth:
+ * 1. A subtle radial grid pattern for texture.
+ * 2. Large, blurred, animated blobs for ambient color.
+ * 3. A vertical gradient vignette to focus attention on the center content.
+ *
+ * @returns The rendered background elements.
  */
-function UI() {
+function UI(): JSX.Element {
   return (
     <div className="fixed inset-0 -z-50 overflow-hidden bg-gray-950">
       {/* 1. Subtle Grid Pattern Overlay */}
@@ -14,7 +23,7 @@ function UI() {
         }}
       />
 
-      {/* 2. Floating Blobs */}
+      {/* 2. Floating Blobs (Ambient Lighting) */}
       <div
         className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] animate-float opacity-50"
         style={{ animationDelay: "0s" }}
@@ -28,7 +37,7 @@ function UI() {
         style={{ animationDelay: "4s" }}
       />
 
-      {/* 3. Gradient Vignette */}
+      {/* 3. Gradient Vignette (Focus Aid) */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-950/80 via-transparent to-gray-950/80 pointer-events-none" />
     </div>
   );

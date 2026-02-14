@@ -1,15 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useActivities } from "../data/useActivities";
-import { useConfirm } from "../ui/useConfirmToast";
 import { useActivityLog } from "../data/useActivityLog";
 import type { ActivityLogEntry } from "../../types/activityLog";
+import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
 
 /**
  * Formats seconds into HH:MM:SS time format.
- * @param seconds           - Total seconds to format
- * @returns string          - Formatted duration string in HH:MM:SS format
+ * @param seconds - Total seconds to format.
+ * @returns Formatted duration string in HH:MM:SS format.
  */
 const formatDuration = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
@@ -21,24 +21,24 @@ const formatDuration = (seconds: number) => {
 /**
  * Custom hook for managing timer mode logic and state.
  * @remarks
- * Handles timer start/stop/pause/resume operations and crash recovery.
+ * Handles timer start/stop/pause/resume operations, crash recovery, and midnight splitting.
  * Manages UI state and interval updates for real-time timer display.
- * @returns Object containing timer state and handlers
- * @returns activities                       - Array of all activities
- * @returns loading                          - Loading state
- * @returns selectedActivityId               - Selected activity ID
- * @returns handleChangeActivity             - Handler for activity selection
- * @returns isRunning                        - Whether timer is currently running
- * @returns elapsed                          - Elapsed time in seconds
- * @returns isPaused                         - Whether timer is paused
- * @returns intervalRef                      - Reference to the timer interval
- * @returns isStartStopButtonDisabled        - Start/stop button disabled state
- * @returns isPauseResumeButtonDisabled      - Pause/resume button disabled state
- * @returns isResetButtonDisabled            - Reset button disabled state
- * @returns handleStart                      - Function to start the timer
- * @returns handleStop                       - Function to stop the timer
- * @returns handlePauseResume                - Function to pause/resume the timer
- * @returns handleResetTimer                 - Function to reset the timer
+ *
+ * @returns An object containing:
+ * - `activities`: Array of all available activities.
+ * - `loading`: Loading state from data source.
+ * - `selectedActivityId`: ID of the currently selected activity.
+ * - `handleChangeActivity`: Handler for activity selection dropdown.
+ * - `isRunning`: Boolean indicating if a timer session is active (running or paused).
+ * - `elapsed`: Total elapsed seconds for the current session.
+ * - `isPaused`: Boolean indicating if the timer is currently paused.
+ * - `handleStart`: Function to start a new timer.
+ * - `handleStop`: Function to stop and save the current timer.
+ * - `handlePauseResume`: Function to toggle pause state.
+ * - `handleResetTimer`: Function to discard the current timer.
+ * - `isStartStopButtonDisabled`: Disabled state for the main action button.
+ * - `isPauseResumeButtonDisabled`: Disabled state for the pause button.
+ * - `isResetButtonDisabled`: Disabled state for the reset button.
  */
 export const useTimerMode = () => {
   const { activities, loading } = useActivities();
@@ -58,11 +58,14 @@ export const useTimerMode = () => {
   const [elapsed, setElapsed] = useState(0);
   const [isPaused, setIsPaused] = useState(true);
 
+  // Button States
   const [isStartStopButtonDisabled, setIsStartStopButtonDisabled] =
     useState(false);
   const [isPauseResumeButtonDisabled, setIsPauseResumeButtonDisabled] =
     useState(false);
   const [isResetButtonDisabled, setIsResetButtonDisabled] = useState(false);
+
+  // Refs for timer logic
   const intervalRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const crashCheckRef = useRef<string | null>(null);
@@ -70,17 +73,17 @@ export const useTimerMode = () => {
 
   /**
    * Handles activity selection change event.
-   * @param e                      - The select element change event
+   * @param e - The select element change event.
    */
   const handleChangeActivity = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedActivityId(e.target.value);
   };
 
   /**
-   * Sets up or resumes the UI tick interval for timer display updates.
-   * @remarks Updates elapsed time every 100ms for smooth UI display
+   * Sets up the UI tick interval.
+   * Updates `elapsed` state every second based on `startRef`.
    */
-  const resumeUITick = () => {
+  const resumeUITick = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = window.setInterval(() => {
@@ -89,11 +92,10 @@ export const useTimerMode = () => {
         setElapsed(Math.floor((now - startRef.current) / 1000));
       }
     }, 1000);
-  };
+  }, []);
 
   /**
    * Starts a new timer for the selected activity.
-   * @remarks Initializes UI state and begins tracking elapsed time
    */
   const handleStart = async () => {
     if (!selectedActivityId) {
@@ -102,7 +104,9 @@ export const useTimerMode = () => {
     }
     if (isRunning) return;
 
+    setIsStartStopButtonDisabled(true); // Prevent double-click
     const newLog = await startTimer(selectedActivityId);
+
     if (newLog) {
       const serverStartTime = new Date(newLog.startTime).getTime();
       startRef.current = serverStartTime;
@@ -113,24 +117,30 @@ export const useTimerMode = () => {
       setIsPauseResumeButtonDisabled(false);
       setIsResetButtonDisabled(false);
       resumeUITick();
+    } else {
+      setIsStartStopButtonDisabled(false);
     }
   };
 
   /**
-   * Stops the running timer with confirmation dialog.
-   * @remarks Calculates duration and prompts user to confirm logging the time
+   * Stops the running timer with a confirmation dialog.
+   * If confirmed, saves the log entry.
    */
   const handleStop = () => {
     if (!isRunning) return;
+
+    // 1. Calculate duration locally for validation
     const now = Date.now();
     const startedAt = startRef.current ?? now;
     const duration = Math.round((now - startedAt) / 1000);
+
     if (duration < APP_CONFIG.MIN_ACTIVITY_DURATION_MINS * 60) {
       toast.error(
         `Duration too short to log (minimum ${APP_CONFIG.MIN_ACTIVITY_DURATION_MINS} minutes)`,
       );
       return;
     }
+
     const activeLog = activityLogs.find(
       (log) => log.status === "active" || log.status === "paused",
     );
@@ -139,63 +149,53 @@ export const useTimerMode = () => {
       return;
     }
 
+    // 2. Pause UI
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-
     setIsPaused(true);
-    setIsResetButtonDisabled(true);
-    setIsPauseResumeButtonDisabled(true);
-    setIsStartStopButtonDisabled(true);
+    disableAllButtons(true);
 
     const activityName =
       activities.find((a) => a._id === selectedActivityId)?.name || "Activity";
     const formattedTime = formatDuration(duration);
+
     confirm({
-      title: `Log ${formattedTime} duration to ${activityName}`,
-      message: `Log ${formattedTime} duration to ${activityName}`,
+      title: `Log ${formattedTime} for ${activityName}?`,
+      message: `Are you sure you want to stop and save this session?`,
       type: "INFO",
-      confirmText: "Yes, Add Entry",
+      confirmText: "Yes, Save Entry",
       onConfirm: async () => {
         const success = await stopTimer(activeLog._id);
         if (success) {
-          setSelectedActivityId("");
-          setIsRunning(false);
-          setElapsed(0);
-          setIsPaused(false);
-          setIsResetButtonDisabled(false);
-          setIsPauseResumeButtonDisabled(false);
-          setIsStartStopButtonDisabled(false);
+          resetLocalState();
         } else {
+          // If server failed, resume UI so user doesn't lose data
           resumeUITick();
           setIsPaused(false);
-          setIsResetButtonDisabled(false);
-          setIsPauseResumeButtonDisabled(false);
-          setIsStartStopButtonDisabled(false);
+          disableAllButtons(false);
         }
       },
       onCancel: () => {
         resumeUITick();
         setIsPaused(false);
-        setIsResetButtonDisabled(false);
-        setIsPauseResumeButtonDisabled(false);
-        setIsStartStopButtonDisabled(false);
-        setIsRunning(true);
+        disableAllButtons(false);
       },
     });
   };
 
   /**
-   * Toggles between paused and running states for the active timer.
-   * @remarks Handles both pausing and resuming with appropriate state updates
+   * Toggles between paused and running states.
    */
   const handlePauseResume = async () => {
     if (!isRunning) return;
 
     if (!isPaused) {
+      // PAUSE ACTION
       const activeLog = activityLogs.find((log) => log.status === "active");
       if (!activeLog) return;
+
       const success = await pauseTimer(activeLog._id);
       if (success) {
         if (intervalRef.current) {
@@ -203,27 +203,24 @@ export const useTimerMode = () => {
           intervalRef.current = null;
         }
         setIsPaused(true);
-      } else {
-        toast.error("Cannot pause timer");
       }
     } else {
+      // RESUME ACTION
       const pausedLog = activityLogs.find((log) => log.status === "paused");
       if (!pausedLog) return;
+
       const success = await resumeTimer(pausedLog._id);
       if (success) {
+        // Recalculate startRef based on current elapsed time to keep UI consistent
         startRef.current = Date.now() - elapsed * 1000;
-
         setIsPaused(false);
         resumeUITick();
-      } else {
-        toast.error("Cannot resume timer");
       }
     }
   };
 
   /**
-   * Resets/discards the current timer with confirmation dialog.
-   * @remarks Requires user confirmation due to data loss
+   * Resets/discards the current timer with a destructive confirmation.
    */
   const handleResetTimer = () => {
     const activeLog = activityLogs.find(
@@ -231,131 +228,66 @@ export const useTimerMode = () => {
     );
     if (!activeLog) return;
 
-    // Pause UI visually
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-
     setIsPaused(true);
-    setIsResetButtonDisabled(true);
-    setIsPauseResumeButtonDisabled(true);
-    setIsStartStopButtonDisabled(true);
+    disableAllButtons(true);
+
     const activityName =
       activities.find((a) => a._id === selectedActivityId)?.name || "Activity";
     const durationStr = formatDuration(elapsed);
+
     confirm({
-      title: `Reset ${durationStr} duration for ${activityName}`,
-      message: `Reset ${durationStr} duration for ${activityName}, this action is irreversible and will lose ${durationStr} duration for activity "${activityName}"`,
+      title: `Discard Timer?`,
+      message: `You are about to discard ${durationStr} of "${activityName}". This cannot be undone.`,
       type: "DANGER",
-      confirmText: "Yes, Reset Timer",
+      confirmText: "Yes, Discard",
       onConfirm: async () => {
         const success = await resetTimer(activeLog._id);
         if (success) {
-          setSelectedActivityId("");
-          setIsRunning(false);
-          setElapsed(0);
-          setIsPaused(false);
-          setIsResetButtonDisabled(false);
-          setIsPauseResumeButtonDisabled(false);
-          setIsStartStopButtonDisabled(false);
-          setIsRunning(false);
-          startRef.current = null;
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
+          resetLocalState();
         } else {
           resumeUITick();
+          setIsPaused(true);
+          disableAllButtons(false);
         }
       },
       onCancel: () => {
-        setIsPaused(false);
-        setIsResetButtonDisabled(false);
-        setIsPauseResumeButtonDisabled(false);
-        setIsStartStopButtonDisabled(false);
-        resumeUITick();
-        setIsRunning(true);
+        disableAllButtons(false);
       },
     });
   };
 
-  useEffect(() => {
-    // 1. Initial Safety Checks
-    if (loading) return;
+  // --- Helper Functions ---
 
-    // Find the current active or paused session
-    const activeLog = activityLogs.find(
-      (log) => log.status === "active" || log.status === "paused",
-    );
+  const disableAllButtons = (disabled: boolean) => {
+    setIsStartStopButtonDisabled(disabled);
+    setIsPauseResumeButtonDisabled(disabled);
+    setIsResetButtonDisabled(disabled);
+  };
 
-    // If no active log exists, strict reset of the UI
-    if (!activeLog) {
-      setIsRunning(false);
-      setIsPaused(false);
-      setElapsed(0);
-      setSelectedActivityId("");
-      startRef.current = null;
-      crashCheckRef.current = null;
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
+  const resetLocalState = () => {
+    setSelectedActivityId("");
+    setIsRunning(false);
+    setElapsed(0);
+    setIsPaused(false);
+    startRef.current = null;
+    crashCheckRef.current = null;
+    disableAllButtons(false);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
+  };
 
-    // -------------------------------------------------------
-    // SCENARIO 0: "Lazy Split" (Fixing a missed midnight split)
-    // -------------------------------------------------------
-    // Check if the active log started on a DIFFERENT day than today.
-    const logStartDate = new Date(activeLog.startTime);
-    const today = new Date();
-
-    const isDifferentDay =
-      logStartDate.getDate() !== today.getDate() ||
-      logStartDate.getMonth() !== today.getMonth() ||
-      logStartDate.getFullYear() !== today.getFullYear();
-
-    if (activeLog.status === "active" && isDifferentDay) {
-      console.log(
-        "🛠️ Found a log from yesterday. Triggering recovery split...",
-      );
-
-      // Lock to prevent loops
-      if (crashCheckRef.current === activeLog._id) return;
-      crashCheckRef.current = activeLog._id;
-
-      (async () => {
-        // 1. Calculate the end of THAT specific day
-        const endOfLogDate = new Date(logStartDate);
-        endOfLogDate.setHours(23, 59, 59, 999);
-
-        // 2. Calculate the start of the NEXT day
-        const startOfNextDay = new Date(endOfLogDate);
-        startOfNextDay.setTime(startOfNextDay.getTime() + 1); // +1ms
-
-        try {
-          // 3. Stop the old one
-          await stopTimer(activeLog._id, endOfLogDate);
-
-          // 4. Start the new one
-          // Note: This starts the new timer at 00:00:00 of the correct day
-          await startTimer(activeLog.activityId, startOfNextDay);
-
-          toast.success("Recovered missed split from previous day.");
-        } catch (err) {
-          console.error("Recovery split failed", err);
-          // It will try again on next refresh
-        } finally {
-          crashCheckRef.current = null;
-        }
-      })();
-
-      return; // Stop execution so we don't restore UI for the old log
-    }
-
-    // -------------------------------------------------------
-    // HELPER: Restore UI from a Valid Log
-    // -------------------------------------------------------
-    const restoreStateFromLog = (log: ActivityLogEntry) => {
-      // Calculate effective start time by subtracting total paused duration
+  /**
+   * Restores UI state from an existing log entry (e.g. on page refresh).
+   */
+  const restoreStateFromLog = useCallback(
+    (log: ActivityLogEntry) => {
+      // Calculate effective start time: Original Start + Total Paused Duration
       const startTime = new Date(log.startTime).getTime();
       const totalPausedMs = (log.pauseHistory || []).reduce((acc, slot) => {
         if (slot.resumeTime && slot.pauseTime) {
@@ -370,154 +302,163 @@ export const useTimerMode = () => {
 
       const effectiveStart = startTime + totalPausedMs;
 
-      // Update UI State
       setSelectedActivityId(log.activityId);
       setIsRunning(true);
+      disableAllButtons(false);
 
       if (log.status === "active") {
         setIsPaused(false);
         startRef.current = effectiveStart;
-
-        // Update elapsed immediately to prevent "00:00:00" flash
         setElapsed(Math.floor((Date.now() - effectiveStart) / 1000));
-
-        // Restart the UI tick
         resumeUITick();
       } else if (log.status === "paused") {
         setIsPaused(true);
         if (intervalRef.current) clearInterval(intervalRef.current);
 
-        // Calculate frozen elapsed time based on last pause
+        // Calculate frozen duration
         if (log.pauseHistory && log.pauseHistory.length > 0) {
           const lastPause = log.pauseHistory[log.pauseHistory.length - 1];
           if (lastPause?.pauseTime) {
             const pauseStart = new Date(lastPause.pauseTime).getTime();
-            const frozenElapsed = Math.floor(
-              (pauseStart - effectiveStart) / 1000,
-            );
-            setElapsed(frozenElapsed);
+            setElapsed(Math.floor((pauseStart - effectiveStart) / 1000));
           }
         }
       }
+    },
+    [resumeUITick],
+  );
 
-      // Enable control buttons
-      setIsStartStopButtonDisabled(false);
-      setIsPauseResumeButtonDisabled(false);
-      setIsResetButtonDisabled(false);
-    };
+  // --- Effects ---
 
-    // -------------------------------------------------------
-    // CRASH DETECTION & RECOVERY
-    // -------------------------------------------------------
+  /**
+   * Effect: Crash Recovery & State Restoration
+   * Runs whenever activityLogs change (e.g., on initial load).
+   */
+  useEffect(() => {
+    if (loading) return;
 
-    // If we are already handling a crash for this specific log,
-    // don't run the check again (prevents loops).
-    if (crashCheckRef.current === activeLog._id) {
-      // Note: We do NOT call restoreStateFromLog here because
-      // we are likely waiting for user input in the modal.
+    const activeLog = activityLogs.find(
+      (log) => log.status === "active" || log.status === "paused",
+    );
+
+    // If no active log, ensure UI is clean
+    if (!activeLog) {
+      resetLocalState();
       return;
     }
+
+    // SCENARIO 0: "Lazy Split" (Fix missed midnight split)
+    const logStartDate = new Date(activeLog.startTime);
+    const today = new Date();
+    const isDifferentDay =
+      logStartDate.getDate() !== today.getDate() ||
+      logStartDate.getMonth() !== today.getMonth() ||
+      logStartDate.getFullYear() !== today.getFullYear();
+
+    if (activeLog.status === "active" && isDifferentDay) {
+      // Avoid infinite loop if we are already processing this log
+      if (crashCheckRef.current === activeLog._id) return;
+      crashCheckRef.current = activeLog._id;
+
+      (async () => {
+        const endOfLogDate = new Date(logStartDate);
+        endOfLogDate.setHours(23, 59, 59, 999);
+
+        const startOfNextDay = new Date(endOfLogDate);
+        startOfNextDay.setTime(startOfNextDay.getTime() + 1); // 00:00:00.000
+
+        try {
+          await stopTimer(activeLog._id, endOfLogDate);
+          await startTimer(activeLog.activityId, startOfNextDay);
+          toast.success("Recovered missed split from previous day.");
+        } catch (err) {
+          console.error("Recovery split failed", err);
+        } finally {
+          crashCheckRef.current = null;
+        }
+      })();
+      return; // Stop here, don't restore UI for the old log
+    }
+
+    // SCENARIO 1 & 2: Crash Detection
+    if (crashCheckRef.current === activeLog._id) return;
 
     const now = new Date();
     const lastHeartbeat = new Date(activeLog.lastHeartbeat);
     const gapDuration = now.getTime() - lastHeartbeat.getTime();
 
-    // SCENARIO 1: > 24 Hours (Auto-Stop silently)
+    // > 24 Hours: Auto-Stop
     if (
       activeLog.status === "active" &&
       gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS
     ) {
-      crashCheckRef.current = activeLog._id; // Lock it
-
+      crashCheckRef.current = activeLog._id;
       (async () => {
-        // Backend handles "Stop at Last Heartbeat"
-        const processedLog = await resumeCrashedTimer(activeLog._id);
-
-        const activityName =
-          activities.find((a) => a._id === activeLog.activityId)?.name ||
-          "Activity";
-
-        if (processedLog?.status === "completed") {
-          toast.info(
-            `Session expired (>24h) for ${activityName}. Saved automatically.`,
-          );
-          // UI will reset on next render naturally
-        } else {
-          // Fallback: If backend didn't stop it, we force reset
-          await resetTimer(activeLog._id);
-        }
+        await resumeCrashedTimer(activeLog._id); // Backend will likely close it
         crashCheckRef.current = null;
       })();
       return;
     }
 
-    // SCENARIO 2: > 5 Minutes (Ask User)
+    // > 5 Minutes: User Confirmation
     if (
       activeLog.status === "active" &&
       gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS
     ) {
-      // Stop ticking visually while we ask
       if (intervalRef.current) clearInterval(intervalRef.current);
+      crashCheckRef.current = activeLog._id;
 
-      crashCheckRef.current = activeLog._id; // Lock it
-      const minutesAway = Math.floor(gapDuration / (60 * 1000));
+      const minutesAway = Math.floor(gapDuration / 60000);
       const activityName =
         activities.find((a) => a._id === activeLog.activityId)?.name ||
         "Activity";
 
       confirm({
         title: "Timer Interrupted",
-        message: `You were away for ${minutesAway} minutes. Do you want to continue (excluding the gap) or stop the timer for ${activityName}?`,
+        message: `You were away for ${minutesAway} minutes. Do you want to continue (excluding the gap) or stop the timer for "${activityName}"?`,
         confirmText: "Continue Session",
         type: "WARNING",
-
         onConfirm: async () => {
-          // "Heal" the timer (Inject Pause).
-          // This updates 'activityLogs', triggering this effect again with 0 gap.
           await resumeCrashedTimer(activeLog._id);
           crashCheckRef.current = null;
         },
-
         onCancel: async () => {
-          // Stop the timer.
-          // This updates 'activityLogs' to completed, triggering reset.
-          await stopTimer(activeLog._id, lastHeartbeat); // Pass lastHeartbeat to be precise
+          await stopTimer(activeLog._id, lastHeartbeat);
           crashCheckRef.current = null;
         },
       });
       return;
     }
 
-    // SCENARIO 3: Normal Operation (No Gap)
-    // Clear lock and restore UI
+    // SCENARIO 3: Normal Restore
     crashCheckRef.current = null;
     restoreStateFromLog(activeLog);
-  }, [activityLogs, loading]);
+  }, [activityLogs, loading, restoreStateFromLog, activities]); // Added dependencies
 
+  /**
+   * Effect: Real-time Midnight Split Check
+   * Only runs when timer is actively running.
+   */
   useEffect(() => {
     if (!isRunning) return;
 
-    // FIX: Don't rely on 'selectedActivityId' state to find the log.
-    // Use the reliable 'status' flag from the data source.
     const activeLog = activityLogs.find((log) => log.status === "active");
-
     if (!activeLog) return;
 
     const checkMidnight = setInterval(async () => {
       const now = new Date();
       const todayDateString = now.toDateString();
 
-      // Check: Is it Midnight AND have we not split for this day yet?
+      // Check if it's 00:00:00 AND we haven't handled this day yet
       if (
         now.getHours() === 0 &&
         now.getMinutes() === 0 &&
         now.getSeconds() <= 2 &&
         lastSplitDateRef.current !== todayDateString
       ) {
-        lastSplitDateRef.current = todayDateString; // Lock it immediately
-        console.log("🕛 Midnight detected! Splitting timer...");
+        lastSplitDateRef.current = todayDateString;
 
-        // Calculate Boundaries
+        // Midnight Split Logic
         const yesterdayEnd = new Date(now);
         yesterdayEnd.setHours(23, 59, 59, 999);
         yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
@@ -526,13 +467,10 @@ export const useTimerMode = () => {
         todayStart.setHours(0, 0, 0, 0);
 
         try {
-          // 1. Stop current timer at 23:59:59 yesterday
+          // Stop yesterday's log
           await stopTimer(activeLog._id, yesterdayEnd);
-
-          // 2. Start new timer at 00:00:00 today
-          // FIX: Pass 'todayStart' explicitly
+          // Start today's log
           await startTimer(activeLog.activityId, todayStart);
-
           toast.info("New day! Timer split automatically.");
         } catch (err) {
           console.error("Split failed", err);
@@ -551,7 +489,7 @@ export const useTimerMode = () => {
     isRunning,
     elapsed,
     isPaused,
-    intervalRef,
+    intervalRef, // Exposed if needed for debug, but generally internal
     isStartStopButtonDisabled,
     isPauseResumeButtonDisabled,
     isResetButtonDisabled,
@@ -561,8 +499,3 @@ export const useTimerMode = () => {
     handleResetTimer,
   };
 };
-
-// split timer
-// 1. ongoing timer -- just log for previous day and start a new timer..
-// 2. crashed timer -- if healing on a new day, log the previous entry and end it
-// 3. paused timer -- if healing on a new day, log the previous entry and end it

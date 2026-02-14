@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type JSX } from "react";
 import UI from "./components/UI";
 import Overview from "./components/Overview";
 import TimerMode from "./components/TimerMode";
@@ -15,13 +15,22 @@ import {
 } from "lucide-react";
 
 /**
- * Main application component.
- * @returns JSX.Element
+ * The root component of the Activity Tracker application.
+ * @remarks
+ * This component acts as the main layout shell, managing the global navigation state
+ * and rendering the appropriate view based on the currently selected tab.
+ *
+ * Key features rendered:
+ * - **Global UI Layer**: Backgrounds and common styles via `<UI />`.
+ * - **Header**: Responsive title section with gradient text.
+ * - **Navigation Dock**: A sticky, floating tab bar for switching between modes (Overview, Timer, Manual Entry, etc.).
+ * - **Content Area**: dynamically renders the selected feature component (`<Overview />`, `<TimerMode />`, etc.).
+ *
+ * @returns The complete application layout structure.
  */
-function App() {
+function App(): JSX.Element {
   const [selectedTab, setSelectedTab] = useState("Overview");
 
-  // Navigation Config
   const tabs = [
     { id: "Overview", label: "Overview", icon: LayoutDashboard },
     { id: "Timer Mode", label: "Timer", icon: Timer },

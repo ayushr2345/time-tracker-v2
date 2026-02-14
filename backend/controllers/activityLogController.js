@@ -1,8 +1,5 @@
 import ActivityLog from "../models/activityLog.js";
-import {
-  validateActivityId,
-  calculateTotalPauseDurationInMs,
-} from "../utils/commonUtils.js";
+import { validateActivityId } from "../utils/commonUtils.js";
 import {
   validateLookBackWindow,
   validateTimeInputs,
@@ -11,6 +8,7 @@ import {
 import {
   getActiveTimer,
   getActivityLog,
+  calculateTotalPauseDurationInMs,
 } from "../utils/timerModeEntryUtils.js";
 import { APP_CONFIG, HTTP_STATUS } from "../constants.js";
 

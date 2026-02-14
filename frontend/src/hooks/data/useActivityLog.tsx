@@ -1,32 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
-import { activityLogService } from "../../services";
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import type {
   ActivityLogEntry,
   ActivityLogsWithDetails,
 } from "../../types/activityLog";
-import { toast } from "react-toastify";
-import { AxiosError } from "axios";
-import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "./useActivities";
-import { APP_CONFIG, HTTP_STATUS } from "../../constants";
+import { activityLogService } from "../../services";
+import { HTTP_STATUS, APP_CONFIG } from "../../constants";
 
 /**
  * Custom hook for managing activity logs and timer operations.
  * @remarks
  * Handles creating manual entries, starting/stopping timers, pausing/resuming, and crash recovery.
  * Provides comprehensive timer management functionality with error handling.
- * @returns Object containing activity logs state and management methods
- * @returns activityLogs           - Array of all activity logs
- * @returns loading                - Loading state
- * @returns fetchActivityLogs      - Function to refetch activity logs
- * @returns createManualLogEntry   - Function to create a manual log entry
- * @returns startTimer             - Function to start a new timer
- * @returns stopTimer              - Function to stop a running timer
- * @returns pauseTimer             - Function to pause a timer
- * @returns resumeTimer            - Function to resume a paused timer
- * @returns sendHeartbeat          - Function to send heartbeat for crash detection
- * @returns resetTimer             - Function to reset/discard a timer
- * @returns resumeCrashedTimer     - Function to recover a crashed timer
+ *
+ * @returns An object containing:
+ * - `activityLogs`: Array of all activity logs.
+ * - `loading`: Boolean indicating if data is being fetched.
+ * - `refetch`: Function to refetch activity logs.
+ * - `createManualLogEntry`: Function to create a manual log entry.
+ * - `startTimer`: Function to start a new timer.
+ * - `stopTimer`: Function to stop a running timer.
+ * - `pauseTimer`: Function to pause a timer.
+ * - `resumeTimer`: Function to resume a paused timer.
+ * - `resetTimer`: Function to reset/discard a timer.
+ * - `resumeCrashedTimer`: Function to recover a crashed timer.
+ * - `deleteLogEntry`: Function to delete a specific log entry.
  */
 export const useActivityLog = () => {
   const { activities } = useActivities();
@@ -36,24 +37,23 @@ export const useActivityLog = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   /**
-   * Creates a Activity Log Entry with Details (activityName & activityColor)
-   * @param activityId                    - The ID of the activity
-   * @param updatedActivityLog            - The updated log from the backend
-   * @returns ActivityLogEntryWithDetails - The created activity log entry with details
+   * Helper to merge activity details (name & color) into a log entry.
+   * @param activityId - The ID of the activity.
+   * @param updatedActivityLog - The log entry from the backend.
+   * @returns The log entry enhanced with activity name and color.
    */
   const saveActivityLogEntryWithDetails = (
     activityId: string,
     updatedActivityLog: ActivityLogEntry,
   ) => {
-    const activityName = activities.find((a) => a._id === activityId)?.name;
-    const activityColor = activities.find((a) => a._id === activityId)?.color;
+    const activity = activities.find((a) => a._id === activityId);
+    const activityName = activity?.name;
+    const activityColor = activity?.color;
 
     const updatedActivityLogWithDetails: ActivityLogsWithDetails = {
       ...updatedActivityLog,
-      activityName: activityName ? activityName : "Activity-Undefined",
-      activityColor: activityColor
-        ? activityColor
-        : APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+      activityName: activityName || "Activity-Undefined",
+      activityColor: activityColor || APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
     };
     return updatedActivityLogWithDetails;
   };
@@ -67,7 +67,7 @@ export const useActivityLog = () => {
       const data = await activityLogService.getAllActivityLogs();
       setActivityLogs(data);
     } catch (err) {
-      toast.error("Failed to fetch activities");
+      toast.error("Failed to fetch activity logs");
     } finally {
       setLoading(false);
     }
@@ -75,10 +75,10 @@ export const useActivityLog = () => {
 
   /**
    * Creates a manual activity log entry with validation and error handling.
-   * @param activityId            - The ID of the activity to log
-   * @param startTime             - When the activity started
-   * @param endTime               - When the activity ended
-   * @returns ActivityLogEntry    - The created activity log entry or null if failed
+   * @param activityId - The ID of the activity to log.
+   * @param startTime - When the activity started.
+   * @param endTime - When the activity ended.
+   * @returns The created activity log entry or null if failed.
    */
   const createManualLogEntry = async (
     activityId: string,
@@ -102,29 +102,16 @@ export const useActivityLog = () => {
       );
       return savedActivityLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to create activity: ${error}`);
-      }
-      console.log("Error creating activity:", error);
+      handleError(error, "create activity log");
       return null;
     }
   };
 
   /**
-   * Starts a new timer for the specified activity with error handling.
-   * @param activityId            - The ID of the activity to start timer for
-   * @param startTime             - Optional: start time of a log (used in case of split timer)
-   * @returns ActivityLogEntry    - The started activity log entry or null if failed
+   * Starts a new timer for the specified activity.
+   * @param activityId - The ID of the activity to start timer for.
+   * @param startTime - (Optional) Start time of a log (used for split timer).
+   * @returns The started activity log entry or null if failed.
    */
   const startTimer = async (activityId: string, startTime?: Date) => {
     try {
@@ -142,29 +129,16 @@ export const useActivityLog = () => {
       );
       return startTimerLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to create activity: ${error}`);
-      }
-      console.log("Error creating activity:", error);
+      handleError(error, "start timer");
       return null;
     }
   };
 
   /**
-   * Stops a running timer and logs the activity with error handling.
-   * @param activityLogId         - The ID of the timer to stop
-   * @param endTime               - Optional: end time of a log (used in case of split timer)
-   * @returns ActivityLogEntry    - The stopped activity log entry or null if failed
+   * Stops a running timer and logs the activity.
+   * @param activityLogId - The ID of the timer to stop.
+   * @param endTime - (Optional) End time of a log (used for split timer).
+   * @returns The stopped activity log entry or null if failed.
    */
   const stopTimer = async (activityLogId: string, endTime?: Date) => {
     try {
@@ -187,28 +161,15 @@ export const useActivityLog = () => {
       );
       return endTimerLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to create activity: ${error}`);
-      }
-      console.log("Error creating activity:", error);
+      handleError(error, "stop timer");
       return null;
     }
   };
 
   /**
-   * Pauses a running timer with error handling.
-   * @param activityLogId         - The ID of the timer to pause
-   * @returns ActivityLogEntry    - The paused activity log entry or null if failed
+   * Pauses a running timer.
+   * @param activityLogId - The ID of the timer to pause.
+   * @returns The paused activity log entry or null if failed.
    */
   const pauseTimer = async (activityLogId: string) => {
     try {
@@ -227,28 +188,15 @@ export const useActivityLog = () => {
       );
       return updatedLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to create activity: ${error}`);
-      }
-      console.log("Error creating activity:", error);
+      handleError(error, "pause timer");
       return null;
     }
   };
 
   /**
-   * Resumes a paused timer with error handling.
-   * @param activityLogId         - The ID of the timer to resume
-   * @returns ActivityLogEntry    - The resumed activity log entry or null if failed
+   * Resumes a paused timer.
+   * @param activityLogId - The ID of the timer to resume.
+   * @returns The resumed activity log entry or null if failed.
    */
   const resumeTimer = async (activityLogId: string) => {
     try {
@@ -267,28 +215,15 @@ export const useActivityLog = () => {
       );
       return updatedLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to create activity: ${error}`);
-      }
-      console.log("Error creating activity:", error);
+      handleError(error, "resume timer");
       return null;
     }
   };
 
   /**
    * Sends a heartbeat for an active timer to detect disconnections.
-   * @param activityLogId         - The ID of the timer to send heartbeat for
-   * @returns ActivityLogEntry    - The updated activity log entry or null if failed
+   * @param activityLogId - The ID of the timer to send heartbeat for.
+   * @returns The updated activity log entry or null if failed.
    */
   const sendHeartbeat = async (activityLogId: string) => {
     try {
@@ -304,28 +239,16 @@ export const useActivityLog = () => {
       );
       return updatedLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          console.error(serverMsg);
-        } else {
-          console.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        console.error(`Failed to create activity: ${error}`);
-      }
-      console.log("Error creating activity:", error);
+      // Quietly log heartbeat errors to console instead of toasting
+      console.error("Heartbeat failed:", error);
       return null;
     }
   };
 
   /**
-   * Resets/discards a timer without logging time with error handling.
-   * @param activityLogId         - The ID of the timer to reset
-   * @returns ActivityLogEntry    - The deleted activity log entry or null if failed
+   * Resets/discards a timer without logging time.
+   * @param activityLogId - The ID of the timer to reset.
+   * @returns The deleted activity log entry or null if failed.
    */
   const resetTimer = async (activityLogId: string) => {
     try {
@@ -333,6 +256,7 @@ export const useActivityLog = () => {
       const activityName = activities.find(
         (a) => a._id === logToDelete?.activityId,
       )?.name;
+
       await activityLogService.resetTimer(activityLogId);
       setActivityLogs((prev) =>
         prev.filter((log) => log._id !== activityLogId),
@@ -340,28 +264,15 @@ export const useActivityLog = () => {
       toast.success(`Discarded timer for "${activityName}"`);
       return logToDelete;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to reset activity timer: ${error}`);
-      }
-      console.log("Error resetting activity timer:", error);
+      handleError(error, "reset timer");
       return null;
     }
   };
 
   /**
    * Attempts to recover a timer that may have crashed or lost connection.
-   * @param activityLogId         - The ID of the timer to recover
-   * @returns ActivityLogEntry    - The recovered activity log entry or null if failed
+   * @param activityLogId - The ID of the timer to recover.
+   * @returns The recovered activity log entry or null if failed.
    */
   const resumeCrashedTimer = async (activityLogId: string) => {
     try {
@@ -376,31 +287,17 @@ export const useActivityLog = () => {
           log._id === activityLogId ? updateActivityLogWithDetails : log,
         ),
       );
-
       return fixedLog;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to resume crashed timer: ${error}`);
-      }
-      console.error("Error resuming crashed timer:", error);
+      handleError(error, "resume crashed timer");
       return null;
     }
   };
 
   /**
-   * Deleted an activity log entry
-   * @param activityLogId         - The ID of the activity log to be deleted
-   * @returns ActivityLogEntry    - The deleted activity log entry or null if failed
+   * Deletes an activity log entry.
+   * @param activityLogId - The ID of the activity log to be deleted.
+   * @returns The deleted activity log entry or null if failed.
    */
   const deleteLogEntry = async (activityLogId: string) => {
     try {
@@ -415,22 +312,27 @@ export const useActivityLog = () => {
       toast.success(`Deleted activity log entry for "${activityName}"`);
       return logToDelete;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const serverMsg = error.response?.data?.error || error.message;
-        if (
-          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
-          error.response?.status === HTTP_STATUS.CONFLICT
-        ) {
-          toast.error(serverMsg);
-        } else {
-          toast.error(`Failed: ${serverMsg}`);
-        }
-      } else {
-        toast.error(`Failed to delete activity log entry: ${error}`);
-      }
-      console.log("Error deleting activity log entry:", error);
+      handleError(error, "delete log entry");
       return null;
     }
+  };
+
+  // Helper for consistent error handling
+  const handleError = (error: unknown, action: string) => {
+    if (error instanceof AxiosError) {
+      const serverMsg = error.response?.data?.error || error.message;
+      if (
+        error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+        error.response?.status === HTTP_STATUS.CONFLICT
+      ) {
+        toast.error(serverMsg);
+      } else {
+        toast.error(`Failed to ${action}: ${serverMsg}`);
+      }
+    } else {
+      toast.error(`Failed to ${action}: ${error}`);
+    }
+    console.error(`Error during ${action}:`, error);
   };
 
   useEffect(() => {

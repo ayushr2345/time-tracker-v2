@@ -1,15 +1,20 @@
+import type { JSX } from "react";
 import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useManualEntryMode } from "../hooks/logic/useManualEntryMode";
 import LoadingSpinner from "./LoadingSpinner";
-import { Edit3, Zap, Calendar, Clock, Save, ArrowRight } from "lucide-react";
+import { Edit3, Zap, Calendar, Clock, Save, ChevronDown } from "lucide-react";
 import { APP_CONFIG } from "../constants";
 
 /**
- * Manual entry mode component for logging past activities.
- * @returns JSX.Element
+ * A form component for logging past activities manually.
+ * @remarks
+ * Allows users to record activities they forgot to track in real-time.
+ * Supports "Today" and "Yesterday" quick selection to handle midnight edge cases easily.
+ *
+ * @returns The rendered Manual Entry page.
  */
-function ManualEntryMode() {
+function ManualEntryMode(): JSX.Element {
   const {
     activities,
     loading,
@@ -32,33 +37,43 @@ function ManualEntryMode() {
     );
   }
 
-  // Helper to find selected activity color
+  // Helper: Find selected activity color for UI accents
   const currentActivity = activities.find((a) => a._id === selectedActivityId);
   const activeColor =
     currentActivity?.color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
 
+  // Helper: Create a synthetic event for the day toggle buttons
+  const handleDayClick = (day: string) => {
+    // We mock the event because the hook expects a ChangeEvent
+    handleChangeDay({
+      target: { value: day },
+    } as React.ChangeEvent<HTMLSelectElement>);
+  };
+
   return (
-    <div className="flex flex-col gap-8 mt-6 max-w-2xl mx-auto">
-      {/* 1. Header */}
+    <div className="flex flex-col gap-8 mt-6 max-w-2xl mx-auto px-4 sm:px-0">
+      {/* 1. Page Header */}
       <div className="text-center space-y-3">
         <h2 className="text-3xl sm:text-4xl font-bold text-white flex items-center justify-center gap-3">
           <Edit3 className="w-8 h-8 text-blue-400" />
-          <span className="text-gradient">Manual Entry</span>
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+            Manual Entry
+          </span>
         </h2>
-        <p className="text-gray-300 text-base font-medium">
-          Forgot to track? Add past activities here.
+        <p className="text-gray-400 text-base font-medium">
+          Forgot to track? Add your past activities here.
         </p>
       </div>
 
       {/* 2. Main Form Card */}
-      <div className="glass rounded-3xl p-6 sm:p-10 shadow-2xl border border-white/10 space-y-8 relative overflow-hidden">
-        {/* Glow Effect */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -z-10" />
+      <div className="relative overflow-hidden bg-gray-900/40 backdrop-blur-md rounded-3xl p-6 sm:p-10 shadow-2xl border border-white/10 space-y-8">
+        {/* Ambient Background Glows */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
         {/* Activity Selector */}
         <div className="space-y-3">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 ml-1">
             <Zap className="w-4 h-4 text-yellow-400" />
             Activity
           </label>
@@ -66,7 +81,7 @@ function ManualEntryMode() {
             <select
               value={selectedActivityId}
               onChange={handleChangeActivity}
-              className="w-full px-5 py-4 rounded-xl bg-gray-900/50 border border-white/10 text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-gray-900/70"
+              className="w-full pl-5 pr-12 py-4 rounded-xl bg-gray-950/50 border border-white/10 text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-gray-900/80 hover:border-white/20"
               style={{
                 borderLeft: selectedActivityId
                   ? `4px solid ${activeColor}`
@@ -86,33 +101,33 @@ function ManualEntryMode() {
                 </option>
               ))}
             </select>
-            {/* Custom Arrow */}
+            {/* Custom Dropdown Arrow */}
             <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 group-hover:text-white transition-colors">
-              <ArrowRight className="w-4 h-4" />
+              <ChevronDown className="w-5 h-5" />
             </div>
           </div>
         </div>
 
         {/* Date & Time Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Day Selector */}
+          {/* Day Selector (Toggle) */}
           <div className="space-y-3 sm:col-span-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 ml-1">
               <Calendar className="w-4 h-4 text-blue-400" />
-              Date
+              Date Context
             </label>
-            <div className="flex gap-4">
+            <div className="flex gap-4 p-1 bg-gray-950/50 rounded-2xl border border-white/5">
               {["today", "yesterday"].map((day) => (
                 <button
                   key={day}
-                  onClick={() =>
-                    handleChangeDay({ target: { value: day } } as any)
-                  }
-                  className={`flex-1 py-3 px-4 rounded-xl border transition-all text-sm font-bold uppercase tracking-wide
+                  type="button"
+                  onClick={() => handleDayClick(day)}
+                  className={`
+                    flex-1 py-3 px-4 rounded-xl transition-all text-sm font-bold uppercase tracking-wide
                     ${
                       selectedDay === day
-                        ? "bg-blue-500/20 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                        : "bg-gray-900/30 border-white/5 text-gray-500 hover:bg-gray-900/50 hover:text-gray-300"
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
+                        : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
                     }
                   `}
                 >
@@ -122,9 +137,9 @@ function ManualEntryMode() {
             </div>
           </div>
 
-          {/* Start Time */}
+          {/* Start Time Input */}
           <div className="space-y-3">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 ml-1">
               <Clock className="w-4 h-4 text-emerald-400" />
               Start Time
             </label>
@@ -132,13 +147,13 @@ function ManualEntryMode() {
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-5 py-3.5 rounded-xl bg-gray-900/50 border border-white/10 text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all [color-scheme:dark] hover:bg-gray-900/70"
+              className="w-full px-5 py-3.5 rounded-xl bg-gray-950/50 border border-white/10 text-white font-mono text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all [color-scheme:dark] hover:bg-gray-900/80 focus:bg-gray-900"
             />
           </div>
 
-          {/* End Time */}
+          {/* End Time Input */}
           <div className="space-y-3">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 ml-1">
               <Clock className="w-4 h-4 text-rose-400" />
               End Time
             </label>
@@ -146,26 +161,28 @@ function ManualEntryMode() {
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-full px-5 py-3.5 rounded-xl bg-gray-900/50 border border-white/10 text-white font-mono focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all [color-scheme:dark] hover:bg-gray-900/70"
+              className="w-full px-5 py-3.5 rounded-xl bg-gray-950/50 border border-white/10 text-white font-mono text-lg focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all [color-scheme:dark] hover:bg-gray-900/80 focus:bg-gray-900"
             />
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit Action */}
         <button
           onClick={handleSubmitManualEntry}
           disabled={!selectedActivityId || !startTime || !endTime}
-          className="
+          className={`
             w-full group relative flex items-center justify-center gap-3 px-8 py-5 rounded-2xl 
-            bg-gradient-to-r from-indigo-500 to-purple-600 
-            text-white font-bold text-lg 
-            shadow-lg shadow-indigo-500/25 
-            hover:scale-[1.02] hover:shadow-indigo-500/40 active:scale-[0.98] 
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-            transition-all duration-200 mt-4
-          "
+            text-white font-bold text-lg shadow-xl transition-all duration-300 mt-4
+            ${
+              !selectedActivityId || !startTime || !endTime
+                ? "bg-gray-800 cursor-not-allowed opacity-50"
+                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 hover:scale-[1.02] hover:shadow-indigo-500/40 active:scale-[0.98]"
+            }
+          `}
         >
-          <Save className="w-5 h-5 group-hover:animate-bounce-subtle" />
+          <Save
+            className={`w-5 h-5 ${!selectedActivityId || !startTime || !endTime ? "" : "group-hover:animate-bounce"}`}
+          />
           <span>Save Entry</span>
         </button>
       </div>
@@ -182,7 +199,7 @@ function ManualEntryMode() {
         draggable
         pauseOnHover
         theme="dark"
-        toastClassName="bg-gray-900 border border-gray-800 text-white rounded-xl shadow-2xl"
+        toastClassName="!bg-gray-900 !border !border-gray-800 !text-white !rounded-xl !shadow-2xl"
       />
     </div>
   );

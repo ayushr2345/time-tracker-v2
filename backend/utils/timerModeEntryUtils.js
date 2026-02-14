@@ -35,3 +35,20 @@ export const getActivityLog = async (activityLogId) => {
     return null;
   }
 };
+
+/**
+ * Calculates the total pause duration in ms from a pause history array.
+ * @function calculateTotalPauseDurationInMs
+ * @param    {Array} pauseHistory - The pause history for a timer activity log
+ * @returns  {number} Total pause duration is ms or null otherwise
+ */
+export const calculateTotalPauseDurationInMs = (pauseHistory) => {
+  if (!pauseHistory || pauseHistory.length === 0) return 0;
+
+  return pauseHistory.reduce((acc, p) => {
+    if (p.pauseTime && p.resumeTime) {
+      return acc + (new Date(p.resumeTime) - new Date(p.pauseTime));
+    }
+    return acc;
+  }, 0);
+};
