@@ -29,14 +29,6 @@ function ManualEntryMode(): JSX.Element {
     handleSubmitManualEntry,
   } = useManualEntryMode();
 
-  if (loading && activities.length === 0) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   // Helper: Find selected activity color for UI accents
   const currentActivity = activities.find((a) => a._id === selectedActivityId);
   const activeColor =
@@ -50,6 +42,14 @@ function ManualEntryMode(): JSX.Element {
     } as React.ChangeEvent<HTMLSelectElement>);
   };
 
+  // --- Render ---
+  if (loading && activities.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-8 mt-6 max-w-2xl mx-auto px-4 sm:px-0">
       {/* 1. Page Header */}

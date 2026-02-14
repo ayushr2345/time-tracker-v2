@@ -1,4 +1,4 @@
-import { useMemo, type JSX } from "react";
+import { type JSX } from "react";
 import {
   BarChart,
   Bar,
@@ -17,53 +17,13 @@ import {
   Activity,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
-  Coffee,
-  Hammer,
-  Zap,
-  Flame,
-  Trophy,
-  type LucideIcon,
 } from "lucide-react";
+import { formatDate, formatDuration, getTier } from "../utils";
 
 import { useOverview } from "../hooks/logic/useOverview";
 import LoadingSpinner from "./LoadingSpinner";
 import ActivityHeatmap from "./ActivityHeatMap";
 import { APP_CONFIG } from "../constants";
-
-// --- Pure Helper Functions ---
-
-const formatDate = (dateInput: Date | string) => {
-  if (!dateInput) return "Now";
-  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
-
-const formatDurationDetailed = (seconds: number) => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
-};
-
-const getTier = (
-  secs: number,
-): { icon: LucideIcon; color: string; label: string } => {
-  if (secs >= 36000)
-    return { icon: Trophy, color: "text-yellow-400", label: "GOD TIER" };
-  if (secs >= 14400)
-    return { icon: Flame, color: "text-orange-500", label: "ON FIRE" };
-  if (secs >= 7200)
-    return { icon: Zap, color: "text-cyan-400", label: "IN THE ZONE" };
-  if (secs >= 3600)
-    return { icon: Hammer, color: "text-emerald-400", label: "FOCUSED" };
-  return { icon: Coffee, color: "text-gray-400", label: "WARMUP" };
-};
 
 /**
  * The main dashboard view.
@@ -87,57 +47,13 @@ function Overview(): JSX.Element {
     sumLogsByPeriod,
     chartData,
     isChartDataEmpty,
+    recentLogs,
+    summaryCards,
   } = useOverview();
 
   const isLoading = activitiesLoading || activityLogsLoading;
 
-  // --- Memoized Data Preparation ---
-
-  // 1. Recent Logs (Top 5)
-  const recentLogs = useMemo(() => {
-    return activityLogs
-      .filter((log) => log.status === "completed")
-      .sort(
-        (a, b) =>
-          new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
-      )
-      .slice(0, 5);
-  }, [activityLogs]);
-
-  // 2. Summary Cards Data Configuration
-  const summaryCards = [
-    {
-      label: "Today",
-      value: sumLogsByPeriod(activityLogs, "today"),
-      grad: "from-blue-500/20 to-blue-600/5",
-      border: "border-blue-500/20",
-      icon: "🌅",
-    },
-    {
-      label: "This Week",
-      value: sumLogsByPeriod(activityLogs, "week"),
-      grad: "from-purple-500/20 to-purple-600/5",
-      border: "border-purple-500/20",
-      icon: "📅",
-    },
-    {
-      label: "This Month",
-      value: sumLogsByPeriod(activityLogs, "month"),
-      grad: "from-indigo-500/20 to-indigo-600/5",
-      border: "border-indigo-500/20",
-      icon: "🗓️",
-    },
-    {
-      label: "This Year",
-      value: sumLogsByPeriod(activityLogs, "year"),
-      grad: "from-pink-500/20 to-pink-600/5",
-      border: "border-pink-500/20",
-      icon: "📆",
-    },
-  ];
-
   // --- Render ---
-
   if (isLoading && activities.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -379,7 +295,7 @@ function Overview(): JSX.Element {
                   );
 
                   const durationSec = log.duration || 0;
-                  const formattedDuration = formatDurationDetailed(durationSec);
+                  const formattedDuration = formatDuration(durationSec);
 
                   const tier = getTier(durationSec);
                   const TierIcon = tier.icon;

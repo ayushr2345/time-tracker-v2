@@ -58,6 +58,12 @@ function TimerMode(): JSX.Element {
     };
   }, [intervalRef]);
 
+  // Helper to find selected activity color
+  const currentActivity = activities.find((a) => a._id === selectedActivityId);
+  const activeColor =
+    currentActivity?.color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
+
+  // --- Render ---
   if (loading && activities.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -65,12 +71,6 @@ function TimerMode(): JSX.Element {
       </div>
     );
   }
-
-  // Helper to find selected activity color
-  const currentActivity = activities.find((a) => a._id === selectedActivityId);
-  const activeColor =
-    currentActivity?.color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
-
   return (
     <div className="flex flex-col gap-8 mt-6 max-w-2xl mx-auto px-4 sm:px-0">
       {/* 1. Header */}

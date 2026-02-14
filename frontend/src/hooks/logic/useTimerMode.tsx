@@ -5,18 +5,7 @@ import { useActivityLog } from "../data/useActivityLog";
 import type { ActivityLogEntry } from "../../types/activityLog";
 import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
-
-/**
- * Formats seconds into HH:MM:SS time format.
- * @param seconds - Total seconds to format.
- * @returns Formatted duration string in HH:MM:SS format.
- */
-const formatDuration = (seconds: number) => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-};
+import { formatDuration } from "../../utils";
 
 /**
  * Custom hook for managing timer mode logic and state.

@@ -155,6 +155,53 @@ export const useOverview = () => {
     return !data.some((item) => item.time > 0);
   };
 
+  /**
+   * Memoization for recent logs so not calculated every re-render
+   */
+  const recentLogs = useMemo(() => {
+    return activityLogs
+      .filter((log) => log.status === "completed")
+      .sort(
+        (a, b) =>
+          new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+      )
+      .slice(0, 5);
+  }, [activityLogs]);
+
+  /**
+   * Summary for total activity hours (today, this week, etc)
+   */
+  const summaryCards = [
+    {
+      label: "Today",
+      value: sumLogsByPeriod(activityLogs, "today"),
+      grad: "from-blue-500/20 to-blue-600/5",
+      border: "border-blue-500/20",
+      icon: "🌅",
+    },
+    {
+      label: "This Week",
+      value: sumLogsByPeriod(activityLogs, "week"),
+      grad: "from-purple-500/20 to-purple-600/5",
+      border: "border-purple-500/20",
+      icon: "📅",
+    },
+    {
+      label: "This Month",
+      value: sumLogsByPeriod(activityLogs, "month"),
+      grad: "from-indigo-500/20 to-indigo-600/5",
+      border: "border-indigo-500/20",
+      icon: "🗓️",
+    },
+    {
+      label: "This Year",
+      value: sumLogsByPeriod(activityLogs, "year"),
+      grad: "from-pink-500/20 to-pink-600/5",
+      border: "border-pink-500/20",
+      icon: "📆",
+    },
+  ];
+
   return {
     activities,
     activityLogs,
@@ -165,5 +212,7 @@ export const useOverview = () => {
     sumLogsByPeriod,
     chartData,
     isChartDataEmpty,
+    recentLogs,
+    summaryCards,
   };
 };

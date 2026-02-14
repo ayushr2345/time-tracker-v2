@@ -1,6 +1,11 @@
 import type { JSX } from "react";
 import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ActivityLogItemForActivityLogs from "./ActivityLogItemForActivityLogs";
+import { useActivities } from "../hooks/data/useActivities";
+import { useActivityLog } from "../hooks/data/useActivityLog";
+import { useActivityLogs } from "../hooks/logic/useActivityLogs";
+import LoadingSpinner from "./LoadingSpinner";
 import {
   Filter,
   Calendar as CalendarIcon,
@@ -9,12 +14,6 @@ import {
   Layers,
   X,
 } from "lucide-react";
-
-import LoadingSpinner from "./LoadingSpinner";
-import ActivityLogItemForActivityLogs from "./ActivityLogItemForActivityLogs";
-import { useActivities } from "../hooks/data/useActivities";
-import { useActivityLog } from "../hooks/data/useActivityLog";
-import { useActivityLogs } from "../hooks/logic/useActivityLogs";
 
 /**
  * The main container for viewing history.
@@ -48,31 +47,13 @@ function ActivityLogs(): JSX.Element {
     totalPages,
     goToPage,
     handleDelete,
+    handleClearFilters,
+    handleWeekFilterToggle,
   } = useActivityLogs();
 
   const isLoading = activitiesLoading || activityLogsLoading;
 
-  // --- Handlers ---
-
-  const handleClearFilters = () => {
-    setFilterActivityId("ALL");
-    setDateFilterType("ALL");
-    setStartDate("");
-    setEndDate("");
-    setCurrentPage(1);
-  };
-
-  const handleWeekFilterToggle = () => {
-    if (dateFilterType === "WEEK") {
-      setDateFilterType("ALL");
-    } else {
-      setDateFilterType("WEEK");
-    }
-    setCurrentPage(1);
-  };
-
   // --- Render ---
-
   if (isLoading && activityLogs.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">

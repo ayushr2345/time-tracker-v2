@@ -1,13 +1,6 @@
 import { useMemo } from "react";
 import type { ActivityLogsWithDetails } from "../../types/activityLog";
-import {
-  Coffee,
-  Hammer,
-  Zap,
-  Flame,
-  Trophy,
-  type LucideIcon,
-} from "lucide-react";
+import { formatDate, getTier } from "../../utils";
 
 export interface DayData {
   date: string;
@@ -52,43 +45,6 @@ const getColor = (intensity: number): string => {
     default:
       return "bg-white/5";
   }
-};
-
-/**
- * Returns a "Gamified" Tier icon and label based on duration.
- * @note Consider moving this to a shared `src/utils/gamification.ts` file if used elsewhere.
- */
-const getTier = (
-  secs: number,
-): { icon: LucideIcon; color: string; label: string } => {
-  if (secs >= 36000)
-    // 10h
-    return { icon: Trophy, color: "text-yellow-400", label: "GOD TIER" };
-  if (secs >= 14400)
-    // 4h
-    return { icon: Flame, color: "text-orange-500", label: "ON FIRE" };
-  if (secs >= 7200)
-    // 2h
-    return { icon: Zap, color: "text-cyan-400", label: "IN THE ZONE" };
-  if (secs >= 3600)
-    // 1h
-    return { icon: Hammer, color: "text-emerald-400", label: "FOCUSED" };
-  return { icon: Coffee, color: "text-gray-400", label: "WARMUP" };
-};
-
-/**
- * Formats a Date object into a readable string (e.g., "Jan 1, 10:00").
- */
-const formatDate = (dateInput: Date | string) => {
-  if (!dateInput) return "Now";
-  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 };
 
 /**

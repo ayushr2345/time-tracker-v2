@@ -201,6 +201,23 @@ export const useActivityLogs = () => {
     );
   }, [currentLogs, groupByActivity, activities]);
 
+  const handleClearFilters = () => {
+    setFilterActivityId("ALL");
+    setDateFilterType("ALL");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
+  };
+
+  const handleWeekFilterToggle = () => {
+    if (dateFilterType === "WEEK") {
+      setDateFilterType("ALL");
+    } else {
+      setDateFilterType("WEEK");
+    }
+    setCurrentPage(1);
+  };
+
   return {
     // Data
     filteredLogs,
@@ -229,5 +246,7 @@ export const useActivityLogs = () => {
     handleDelete,
     formatDate,
     getTier,
+    handleClearFilters,
+    handleWeekFilterToggle,
   };
 };

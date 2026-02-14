@@ -1,16 +1,9 @@
 import type { JSX } from "react";
 import type { ActivityLogsWithDetails } from "../types/activityLog";
 import type { ActivityWithLogCount } from "../types/activity";
-import {
-  Trash2,
-  Coffee,
-  Hammer,
-  Zap,
-  Flame,
-  Trophy,
-  type LucideIcon,
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { APP_CONFIG } from "../constants";
+import { formatDate, formatDuration, getTier } from "../utils";
 
 export interface ActivityLogItemProps {
   /** The log entry to display. */
@@ -20,44 +13,6 @@ export interface ActivityLogItemProps {
   /** Callback to delete the log. */
   onDelete: (logId: string) => void;
 }
-
-// --- Pure Helper Functions (No Hooks) ---
-
-const formatDate = (dateInput: Date | string) => {
-  if (!dateInput) return "Now";
-  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
-
-const formatDuration = (seconds: number) => {
-  if (!seconds) return "0s";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m ${s}s`;
-};
-
-const getTier = (
-  secs: number,
-): { icon: LucideIcon; color: string; label: string } => {
-  if (secs >= 36000)
-    return { icon: Trophy, color: "text-yellow-400", label: "GOD TIER" };
-  if (secs >= 14400)
-    return { icon: Flame, color: "text-orange-500", label: "ON FIRE" };
-  if (secs >= 7200)
-    return { icon: Zap, color: "text-cyan-400", label: "IN THE ZONE" };
-  if (secs >= 3600)
-    return { icon: Hammer, color: "text-emerald-400", label: "FOCUSED" };
-  return { icon: Coffee, color: "text-gray-400", label: "WARMUP" };
-};
 
 /**
  * Renders a single activity log card.
@@ -86,6 +41,7 @@ function ActivityLogItemForActivityLogs({
     onDelete(log._id);
   };
 
+  // --- Render ---
   return (
     <li className="relative group overflow-hidden rounded-2xl bg-gray-900/40 backdrop-blur-sm border border-white/5 hover:border-white/10 transition-all duration-300 shadow-lg hover:shadow-2xl hover:bg-gray-900/60">
       {/* Left Color Indicator */}
