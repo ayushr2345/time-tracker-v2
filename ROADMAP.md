@@ -8,31 +8,34 @@
 - [x] **Code Organization:** Restructured codebase into feature-based folders (`/components`, `/hooks`, `/services`).
 
 ## Phase 2: Reliability & Engineering Standards (🚧 Current Focus)
+- [x] **Refactoring & Cleanup:**
+  - [x] **Custom Hooks:** Extracted logic into `useActivities`, `useTimerMode`, `useOverview`, etc.
+  - [x] **Utility Functions:** Created `utils.tsx` for shared formatting/tier logic.
+  - [x] **Component Optimization:** Removed logic from presentation components (e.g., `ActivityLogItem`).
+  - [x] **Type Safety:** Added explicit return types and interfaces to all components/hooks.
+  - [x] **Documentation:** Added TSDoc comments to all exported functions and hooks.
 - [ ] **Unit Testing Setup:**
-    - [ ] Install Vitest & React Testing Library.
-    - [ ] Create simple smoke test (`App.test.tsx`).
+  - [ ] Install Vitest & React Testing Library.
+  - [ ] Create simple smoke test (`App.test.tsx`).
 - [ ] **Critical Logic Tests:**
-    - [ ] Write unit tests for Time/Duration utility functions.
-    - [ ] Write unit tests for Heatmap calculation logic (date grouping).
-- [ ] **Refactoring:**
-    - [ ] **Hooks:** Extract frequently used logic into functions.
+  - [ ] Write unit tests for `utils.tsx` (Time/Duration formatting, Tier logic).
+  - [ ] Write unit tests for Heatmap calculation logic (date grouping).
 - [ ] **CI Pipeline:**
-    - [ ] Create `.github/workflows/ci.yml`.
-    - [ ] Configure GitHub Actions to run Lint + Tests on every push to `master`.
-- [ ] **README:** Add high-quality screenshots, tech stack badges, and "How to Run" instructions.
+  - [ ] Create `.github/workflows/ci.yml`.
+  - [ ] Configure GitHub Actions to run Lint + Tests on every push to `master`.
 
 ## Phase 3: Infrastructure & DevOps
 - [ ] **Dockerization:**
-    - [ ] Create `Dockerfile` for Frontend and Backend.
-    - [ ] Create `docker-compose.yml` to spin up the full stack (App + DB) with one command.
+  - [ ] Create `Dockerfile` for Frontend and Backend.
+  - [ ] Create `docker-compose.yml` to spin up the full stack (App + DB) with one command.
 - [ ] **Environment Config:** Standardize `.env` variables for Dev vs. Prod.
 
 ## Phase 4: Expansion (Features v2.0)
 - [ ] **Authentication:** Implement OAuth (Google) and Email/Password login.
 - [ ] **User Profiles:** Settings page for user details and preferences.
 - [ ] **Gamification:**
-    - [ ] Calculate and display "Current Streak" and "Longest Streak".
-    - [ ] Add visual badges for milestones.
+  - [ ] Calculate and display "Current Streak" and "Longest Streak".
+  - [ ] Add visual badges for milestones.
 - [ ] **Mobile Responsiveness:** Polish UI for mobile web usage.
 
 ## Phase 5: Documentation & Polish
