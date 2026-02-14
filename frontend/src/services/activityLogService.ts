@@ -126,8 +126,8 @@ export const activityLogService = {
    * Discards a timer completely without saving the duration.
    * This is a destructive action (DELETE).
    *
-   * @param activityLogId - The ID of the log entry to delete.
-   * @returns             - A promise resolving to the deleted log data.
+   * @param activityLogId - The ID of the log entry to reset.
+   * @returns             - A promise resolving to the resetted log data.
    */
   resetTimer: async (activityLogId: string): Promise<ActivityLogEntry> => {
     const response = await apiClient.delete<ActivityLogEntry>(
@@ -148,6 +148,20 @@ export const activityLogService = {
   ): Promise<ActivityLogEntry> => {
     const response = await apiClient.patch<ActivityLogEntry>(
       `/activity-logs/resumeCrashedTimer/${activityLogId}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Deleted an activity log entry.
+   * This is a destructive action (DELETE).
+   *
+   * @param activityLogId - The ID of the log entry to delete.
+   * @returns             - A promise resolving to the deleted log data.
+   */
+  deleteLogEntry: async (activityLogId: string): Promise<ActivityLogEntry> => {
+    const response = await apiClient.delete<ActivityLogEntry>(
+      `/activity-logs/deleteLogEntry/${activityLogId}`,
     );
     return response.data;
   },

@@ -203,6 +203,8 @@ export const useTimerMode = () => {
           intervalRef.current = null;
         }
         setIsPaused(true);
+      } else {
+        toast.error("Cannot pause timer");
       }
     } else {
       const pausedLog = activityLogs.find((log) => log.status === "paused");
@@ -213,6 +215,8 @@ export const useTimerMode = () => {
 
         setIsPaused(false);
         resumeUITick();
+      } else {
+        toast.error("Cannot resume timer");
       }
     }
   };

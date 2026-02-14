@@ -13,7 +13,9 @@ function LoadingSpinner() {
         {/* Inner Glow */}
         <div className="absolute inset-2 rounded-full bg-indigo-500/20 blur-md animate-pulse"></div>
       </div>
-      <p className="text-gray-400 text-sm font-medium animate-pulse">Loading data...</p>
+      <p className="text-gray-400 text-sm font-medium animate-pulse">
+        Loading data...
+      </p>
     </div>
   );
 }

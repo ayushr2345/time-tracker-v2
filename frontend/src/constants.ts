@@ -44,4 +44,6 @@ export const APP_CONFIG = {
   MAX_GAP_DURATION_FOR_CONFIRMATION_MS: TWENTY_FOUR_HOURS,
   /** Maximum duration (in ms) after which revovery is not allowed (24 hrs) */
   NO_TIMER_RECOVERY_BEYOND_THIS_MS: TWENTY_FOUR_HOURS,
+  /** Number of activity logs to show per page */
+  ACTIVITY_LOGS_PER_PAGE: 15,
 };

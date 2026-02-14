@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { AlertTriangle, Info, Trash2, X, Check } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, Info, Trash2 } from "lucide-react";
 
 export type ConfirmToastType = "DANGER" | "WARNING" | "INFO";
 
@@ -41,22 +41,22 @@ export const ConfirmToast = ({
       color: "text-red-400",
       bgIcon: "bg-red-500/20",
       btn: "bg-red-600 hover:bg-red-500",
-      border: "border-red-500/30"
+      border: "border-red-500/30",
     },
     WARNING: {
       icon: AlertTriangle,
       color: "text-yellow-400",
       bgIcon: "bg-yellow-500/20",
       btn: "bg-yellow-600 hover:bg-yellow-500",
-      border: "border-yellow-500/30"
+      border: "border-yellow-500/30",
     },
     INFO: {
       icon: Info,
       color: "text-blue-400",
       bgIcon: "bg-blue-500/20",
       btn: "bg-blue-600 hover:bg-blue-500",
-      border: "border-blue-500/30"
-    }
+      border: "border-blue-500/30",
+    },
   }[type];
 
   const Icon = config.icon;
@@ -80,7 +80,9 @@ export const ConfirmToast = ({
         </div>
         <div>
           <h4 className="text-white font-bold text-base">{title}</h4>
-          <p className="text-gray-400 text-sm mt-1 leading-relaxed">{message}</p>
+          <p className="text-gray-400 text-sm mt-1 leading-relaxed">
+            {message}
+          </p>
         </div>
       </div>
 
@@ -88,14 +90,20 @@ export const ConfirmToast = ({
       {requireInput && (
         <div className="mb-4 pl-1">
           <label className="text-xs text-gray-500 mb-1.5 block">
-            Type <span className="font-mono text-white bg-white/10 px-1 rounded">{matchText}</span> to confirm:
+            Type{" "}
+            <span className="font-mono text-white bg-white/10 px-1 rounded">
+              {matchText}
+            </span>{" "}
+            to confirm:
           </label>
           <input
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder={matchText}
             className={`w-full px-3 py-2 rounded-lg bg-black/40 text-white text-sm border focus:outline-none transition-all ${
-              value === matchText ? "border-green-500/50 focus:border-green-500" : "border-white/10 focus:border-white/30"
+              value === matchText
+                ? "border-green-500/50 focus:border-green-500"
+                : "border-white/10 focus:border-white/30"
             }`}
             autoFocus
           />
@@ -119,7 +127,7 @@ export const ConfirmToast = ({
             ${config.btn}
           `}
         >
-          {type === 'DANGER' && <Trash2 className="w-3 h-3" />}
+          {type === "DANGER" && <Trash2 className="w-3 h-3" />}
           {confirmText}
         </button>
       </div>

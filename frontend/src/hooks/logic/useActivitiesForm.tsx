@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivities } from "../data/useActivities";
-import type { ActivityWithLogCount } from "../../types/activity";
+import type { Activity, ActivityWithLogCount } from "../../types/activity";
 import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
 
@@ -23,12 +23,14 @@ import { APP_CONFIG } from "../../constants";
  * @returns handleDeleteActivity   - Function to delete an activity
  */
 export const useActivitiesForm = () => {
-  const { activities, loading, addActivity, deleteActivity } = useActivities();
+  const { activities, loading, addActivity, deleteActivity, updateActivity } =
+    useActivities();
   const { confirm } = useConfirm();
   const [name, setName] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>(
     APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
   );
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const presetColors = [
     { name: "Blue", value: "#3b82f6" },
@@ -96,6 +98,60 @@ export const useActivitiesForm = () => {
     }
   };
 
+  /**
+   * Handles activity updation with validation and form reset.
+   * @returns boolean             - True if activity was updated successfully, false otherwise
+   */
+  const handleUpdateActivity = async () => {
+    if (!editingId) {
+      toast.error("Activity Id cannot be empty");
+      return;
+    }
+    if (!name.trim()) {
+      toast.error("Activity name cannot be empty.");
+      return false;
+    }
+    const updatedActivity: Activity = {
+      _id: editingId,
+      name: name,
+      color: selectedColor,
+    };
+    const success = await updateActivity(updatedActivity);
+    if (success) {
+      setName("");
+      setSelectedColor(APP_CONFIG.DEFAULT_ACTIVITY_COLOR);
+    }
+    return success;
+  };
+
+  const startEditing = (activity: any) => {
+    setEditingId(activity._id);
+    setName(activity.name);
+    setSelectedColor(activity.color);
+    window.scrollTo({ top: 200, behavior: "smooth" });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setName("");
+    setSelectedColor(APP_CONFIG.DEFAULT_ACTIVITY_COLOR);
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      toast.error("Activity name cannot be empty.");
+      return;
+    }
+
+    if (editingId) {
+      await handleUpdateActivity();
+      cancelEditing();
+    } else {
+      await handleCreateActivity();
+      setName("");
+    }
+  };
+
   return {
     activities,
     loading,
@@ -104,9 +160,10 @@ export const useActivitiesForm = () => {
     selectedColor,
     setSelectedColor,
     presetColors,
-    handleCreateActivity,
     handleDeleteActivity,
+    editingId,
+    startEditing,
+    cancelEditing,
+    handleSubmit,
   };
 };
-
-// TODO: add frontend and supporting backend to update activity name

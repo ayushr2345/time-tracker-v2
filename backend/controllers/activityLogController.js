@@ -635,3 +635,40 @@ export const resumeCrashedTimer = async (req, res) => {
       .json({ error: "Failed to resume crashed timer" });
   }
 };
+
+/**
+ * Deletes the activity log.
+ * @async
+ * @function deleteLogEntry
+ * @param    {Object} req           - Express request object
+ * @param    {string} req.params.id - The activity log ID to delete
+ * @param    {Object} res           - Express response object
+ * @returns  {void}                 - Returns success message or error response
+ */
+export const deleteLogEntry = async (req, res) => {
+  try {
+    const activityLogId = req.params.id;
+    if (!activityLogId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: "Missing required field",
+      });
+    }
+
+    const activityLog = await getActivityLog(activityLogId);
+    if (!activityLog) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        error: "Activity Log not found.",
+      });
+    }
+
+    await ActivityLog.findByIdAndDelete(activityLogId);
+    res
+      .status(HTTP_STATUS.NO_CONTENT)
+      .json({ message: "Activity log deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting the activity log entry", error);
+    res
+      .status(HTTP_STATUS.SERVER_ERROR)
+      .json({ error: "Failed to delete the activity log" });
+  }
+};

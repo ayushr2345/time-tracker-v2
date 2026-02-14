@@ -15,6 +15,7 @@ import {
   sendHeartbeat,
   resetTimer,
   resumeCrashedTimer,
+  deleteLogEntry,
 } from "../controllers/activityLogController.js";
 
 const router = express.Router();
@@ -29,5 +30,6 @@ router.patch("/resumeTimer/:id", resumeTimer);
 router.patch("/sendHeartbeat/:id", sendHeartbeat);
 router.delete("/resetTimer/:id", resetTimer);
 router.patch("/resumeCrashedTimer/:id", resumeCrashedTimer);
+router.delete("/deleteLogEntry/:id", deleteLogEntry);
 
 export default router;

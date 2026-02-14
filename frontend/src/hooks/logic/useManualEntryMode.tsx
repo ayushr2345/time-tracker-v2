@@ -124,7 +124,6 @@ export const useManualEntryMode = () => {
     if (!data) return;
 
     const { startTimeDate, endTimeDate, message, toastType } = data;
-    console.log(startTimeDate, endTimeDate);
 
     confirm({
       title: `Confirm Manual Entry for ${activities.find((a) => a._id === selectedActivityId)?.name}`,

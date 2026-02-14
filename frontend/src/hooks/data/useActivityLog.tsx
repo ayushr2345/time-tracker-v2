@@ -397,6 +397,42 @@ export const useActivityLog = () => {
     }
   };
 
+  /**
+   * Deleted an activity log entry
+   * @param activityLogId         - The ID of the activity log to be deleted
+   * @returns ActivityLogEntry    - The deleted activity log entry or null if failed
+   */
+  const deleteLogEntry = async (activityLogId: string) => {
+    try {
+      const logToDelete = activityLogs.find((log) => log._id === activityLogId);
+      const activityName = activities.find(
+        (a) => a._id === logToDelete?.activityId,
+      )?.name;
+      await activityLogService.deleteLogEntry(activityLogId);
+      setActivityLogs((prev) =>
+        prev.filter((log) => log._id !== activityLogId),
+      );
+      toast.success(`Deleted activity log entry for "${activityName}"`);
+      return logToDelete;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const serverMsg = error.response?.data?.error || error.message;
+        if (
+          error.response?.status === HTTP_STATUS.BAD_REQUEST ||
+          error.response?.status === HTTP_STATUS.CONFLICT
+        ) {
+          toast.error(serverMsg);
+        } else {
+          toast.error(`Failed: ${serverMsg}`);
+        }
+      } else {
+        toast.error(`Failed to delete activity log entry: ${error}`);
+      }
+      console.log("Error deleting activity log entry:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchActivityLogs();
   }, [fetchActivityLogs]);
@@ -423,5 +459,6 @@ export const useActivityLog = () => {
     resumeTimer,
     resetTimer,
     resumeCrashedTimer,
+    deleteLogEntry,
   };
 };

@@ -103,6 +103,47 @@ export const useActivities = () => {
     }
   };
 
+  /**
+   * Updates an activity with error handling and state update.
+   * @param activity              - The activity type containing updated name and color
+   * @returns boolean             - True if activity was successfully updated, false otherwise
+   */
+  const updateActivity = async (activity: Activity) => {
+    try {
+      const updatedActivity = await activityService.updateActivity(activity);
+      const updatedActivityWithLogCount: ActivityWithLogCount = {
+        ...updatedActivity,
+        logCount: 0,
+      };
+      setActivities((prev) =>
+        prev.map((activity) =>
+          activity._id === updatedActivityWithLogCount._id
+            ? updatedActivityWithLogCount
+            : activity,
+        ),
+      );
+      toast.success("Activity updated successfully.");
+      return true;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const statusCode = error.response?.status;
+        if (statusCode === HTTP_STATUS.NOT_FOUND) {
+          toast.error("Activity not found.");
+        } else if (statusCode === HTTP_STATUS.SERVER_ERROR) {
+          toast.error("Error updating activity on server.");
+        } else {
+          toast.error(
+            `Failed to update activity: ${error.response?.data?.message || error.message}`,
+          );
+        }
+      } else {
+        toast.error(`Failed to update activity: ${error}`);
+      }
+      console.log("Error updating activity:", error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
@@ -113,7 +154,6 @@ export const useActivities = () => {
     refetch: fetchActivities,
     addActivity,
     deleteActivity,
+    updateActivity,
   };
 };
-
-// TODO: add frontend and supporting backend to update activity name

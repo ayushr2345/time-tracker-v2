@@ -42,12 +42,9 @@ export const activityService = {
    * @param updatedData - A partial object containing the fields to modify (e.g., name or color).
    * @returns           - A promise resolving to the updated Activity object.
    */
-  updateActivity: async (
-    activityId: string,
-    updatedData: Partial<Activity>,
-  ): Promise<Activity> => {
+  updateActivity: async (updatedData: Activity): Promise<Activity> => {
     const response = await apiClient.patch<Activity>(
-      `/activities/updateActivity/${activityId}`,
+      `/activities/updateActivity/${updatedData._id}`,
       updatedData,
     );
     return response.data;
