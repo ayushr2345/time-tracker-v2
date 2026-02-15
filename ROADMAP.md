@@ -17,12 +17,11 @@
 - [ ] **Unit Testing Setup (Frontend):**
   - [x] Install Vitest & React Testing Library.
   - [ ] Create simple smoke test (`App.test.tsx`).
-  - [x] Create test for utils.tsx (`utils.test.tsx`).
-  - [x] Create test for logic hooks useManualEntryMode.tsx (`useManualEntryMode.test.tsx`).
 - [ ] **Unit Testing Setup (Backend):**
   - [ ] Install testing library and start writing tests
-- [ ] **Critical Logic Tests:**
-  - [ ] Write unit tests for `utils.tsx` (Time/Duration formatting, Tier logic).
+- [ ] **Critical Logic Tests (Frontend):**
+  - [x] Write unit tests for `utils.tsx` (`utils.test.tsx`).
+  - [x] Create test for logic hooks useManualEntryMode.tsx (`useManualEntryMode.test.tsx`).
   - [ ] Write unit tests for Heatmap calculation logic (date grouping).
 - [ ] **CI Pipeline:**
   - [ ] Create `.github/workflows/ci.yml`.
