@@ -14,9 +14,13 @@
   - [x] **Component Optimization:** Removed logic from presentation components (e.g., `ActivityLogItem`).
   - [x] **Type Safety:** Added explicit return types and interfaces to all components/hooks.
   - [x] **Documentation:** Added TSDoc comments to all exported functions and hooks.
-- [ ] **Unit Testing Setup:**
-  - [ ] Install Vitest & React Testing Library.
+- [ ] **Unit Testing Setup (Frontend):**
+  - [x] Install Vitest & React Testing Library.
   - [ ] Create simple smoke test (`App.test.tsx`).
+  - [x] Create test for utils.tsx (`utils.test.tsx`).
+  - [x] Create test for logic hooks useManualEntryMode.tsx (`useManualEntryMode.test.tsx`).
+- [ ] **Unit Testing Setup (Backend):**
+  - [ ] Install testing library and start writing tests
 - [ ] **Critical Logic Tests:**
   - [ ] Write unit tests for `utils.tsx` (Time/Duration formatting, Tier logic).
   - [ ] Write unit tests for Heatmap calculation logic (date grouping).
@@ -31,6 +35,7 @@
 - [ ] **Environment Config:** Standardize `.env` variables for Dev vs. Prod.
 
 ## Phase 4: Expansion (Features v2.0)
+- [ ] **Improvement:** Allow Multi Day entry for Manual Entry Mode with splitting.
 - [ ] **Authentication:** Implement OAuth (Google) and Email/Password login.
 - [ ] **User Profiles:** Settings page for user details and preferences.
 - [ ] **Gamification:**

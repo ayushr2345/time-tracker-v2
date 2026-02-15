@@ -118,6 +118,7 @@ export const useManualEntryMode = () => {
       return null;
     }
 
+    // Redundant currently. To be used when implementing multi day entry for manual entry mode.
     if (durationMs > APP_CONFIG.MAX_ACTIVITY_DURATION_MS) {
       toast.error("Activity duration cannot exceed 24 hours.");
       return null;
