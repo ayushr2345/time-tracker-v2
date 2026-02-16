@@ -5,7 +5,12 @@
  * Provides methods for fetching, creating, updating, and deleting activities.
  */
 import apiClient from "./apiClient";
-import type { Activity, ActivityWithLogCount } from "../types/activity";
+import type {
+  Activity,
+  ActivityWithLogCount,
+  CreateActivityPayload,
+  UpdateActivityPayload,
+} from "@time-tracker/shared";
 
 export const activityService = {
   /**
@@ -27,7 +32,7 @@ export const activityService = {
    * @param data - The activity payload containing the name and color (excludes ID).
    * @returns The newly created Activity object.
    */
-  createActivity: async (data: Omit<Activity, "_id">): Promise<Activity> => {
+  createActivity: async (data: CreateActivityPayload): Promise<Activity> => {
     const response = await apiClient.post<Activity>(
       "/activities/createActivity",
       data,
@@ -36,14 +41,18 @@ export const activityService = {
   },
 
   /**
-   * Updates an existing activity on the backend.
+   * Updates an existing activity.
    *
-   * @param updatedData - The full activity object containing the ID and fields to modify.
-   * @returns The updated Activity object from the server.
+   * @param activityId - The unique ID of the activity to update.
+   * @param data - The fields to modify (name, color).
+   * @returns The updated Activity object.
    */
-  updateActivity: async (updatedData: Activity): Promise<Activity> => {
+  updateActivity: async (
+    activityId: string,
+    updatedData: UpdateActivityPayload,
+  ): Promise<Activity> => {
     const response = await apiClient.patch<Activity>(
-      `/activities/updateActivity/${updatedData._id}`,
+      `/activities/updateActivity/${activityId}`,
       updatedData,
     );
     return response.data;

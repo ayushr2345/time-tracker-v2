@@ -2,10 +2,14 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
-import type { ActivityLogEntry } from "../../types/activityLog";
+import type { ActivityLogEntry } from "@time-tracker/shared";
 import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
 import { formatDuration } from "../../utils";
+import type {
+  CreateTimerActivityLogPayload,
+  StopTimerActivityLogPayload,
+} from "@time-tracker/shared";
 
 /**
  * Custom hook for managing timer mode logic and state.
@@ -94,7 +98,10 @@ export const useTimerMode = () => {
     if (isRunning) return;
 
     setIsStartStopButtonDisabled(true); // Prevent double-click
-    const newLog = await startTimer(selectedActivityId);
+    const timerEntryPayload: CreateTimerActivityLogPayload = {
+      activityId: selectedActivityId,
+    };
+    const newLog = await startTimer(timerEntryPayload);
 
     if (newLog) {
       const serverStartTime = new Date(newLog.startTime).getTime();
@@ -150,13 +157,17 @@ export const useTimerMode = () => {
       activities.find((a) => a._id === selectedActivityId)?.name || "Activity";
     const formattedTime = formatDuration(duration);
 
+    const stopTimerEntryPayload: StopTimerActivityLogPayload = {
+      _id: activeLog._id,
+    };
+
     confirm({
       title: `Log ${formattedTime} for ${activityName}?`,
       message: `Are you sure you want to stop and save this session?`,
       type: "INFO",
       confirmText: "Yes, Save Entry",
       onConfirm: async () => {
-        const success = await stopTimer(activeLog._id);
+        const success = await stopTimer(stopTimerEntryPayload);
         if (success) {
           resetLocalState();
         } else {
@@ -357,8 +368,16 @@ export const useTimerMode = () => {
         startOfNextDay.setTime(startOfNextDay.getTime() + 1); // 00:00:00.000
 
         try {
-          await stopTimer(activeLog._id, endOfLogDate);
-          await startTimer(activeLog.activityId, startOfNextDay);
+          const timerEntryPayload: CreateTimerActivityLogPayload = {
+            activityId: activeLog.activityId,
+            startTime: startOfNextDay,
+          };
+          const stopTimerEntryPayload: StopTimerActivityLogPayload = {
+            _id: activeLog.activityId,
+            endTime: endOfLogDate,
+          };
+          await stopTimer(stopTimerEntryPayload);
+          await startTimer(timerEntryPayload);
           toast.success("Recovered missed split from previous day.");
         } catch (err) {
           console.error("Recovery split failed", err);
@@ -401,6 +420,10 @@ export const useTimerMode = () => {
       const activityName =
         activities.find((a) => a._id === activeLog.activityId)?.name ||
         "Activity";
+      const stopTimerEntryPayload: StopTimerActivityLogPayload = {
+        _id: activeLog._id,
+        endTime: lastHeartbeat,
+      };
 
       confirm({
         title: "Timer Interrupted",
@@ -412,7 +435,7 @@ export const useTimerMode = () => {
           crashCheckRef.current = null;
         },
         onCancel: async () => {
-          await stopTimer(activeLog._id, lastHeartbeat);
+          await stopTimer(stopTimerEntryPayload);
           crashCheckRef.current = null;
         },
       });
@@ -456,10 +479,18 @@ export const useTimerMode = () => {
         todayStart.setHours(0, 0, 0, 0);
 
         try {
+          const timerEntryPayload: CreateTimerActivityLogPayload = {
+            activityId: activeLog.activityId,
+            startTime: todayStart,
+          };
+          const stopTimerEntryPayload: StopTimerActivityLogPayload = {
+            _id: activeLog._id,
+            endTime: yesterdayEnd,
+          };
           // Stop yesterday's log
-          await stopTimer(activeLog._id, yesterdayEnd);
+          await stopTimer(stopTimerEntryPayload);
           // Start today's log
-          await startTimer(activeLog.activityId, todayStart);
+          await startTimer(timerEntryPayload);
           toast.info("New day! Timer split automatically.");
         } catch (err) {
           console.error("Split failed", err);

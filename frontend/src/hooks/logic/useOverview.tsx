@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
-import type { ActivityLogEntry } from "../../types/activityLog";
+import type { ActivityLogEntry } from "@time-tracker/shared";
 
 type TimePeriod =
   | "today"

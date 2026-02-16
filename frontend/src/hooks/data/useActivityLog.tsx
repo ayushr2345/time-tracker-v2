@@ -5,7 +5,10 @@ import "react-toastify/dist/ReactToastify.css";
 import type {
   ActivityLogEntry,
   ActivityLogsWithDetails,
-} from "../../types/activityLog";
+  CreateManualActivityLogPayload,
+  CreateTimerActivityLogPayload,
+  StopTimerActivityLogPayload,
+} from "@time-tracker/shared";
 import { useActivities } from "./useActivities";
 import { activityLogService } from "../../services";
 import { HTTP_STATUS, APP_CONFIG } from "../../constants";
@@ -80,19 +83,12 @@ export const useActivityLog = () => {
    * @param endTime - When the activity ended.
    * @returns The created activity log entry or null if failed.
    */
-  const createManualLogEntry = async (
-    activityId: string,
-    startTime: Date,
-    endTime: Date,
-  ) => {
+  const createManualLogEntry = async (data: CreateManualActivityLogPayload) => {
     try {
-      const savedActivityLog = await activityLogService.createManualLogEntry(
-        activityId,
-        startTime,
-        endTime,
-      );
+      const savedActivityLog =
+        await activityLogService.createManualLogEntry(data);
       const updatedActivityLogWithDetails = saveActivityLogEntryWithDetails(
-        activityId,
+        data.activityId,
         savedActivityLog,
       );
       setActivityLogs((prev) => [updatedActivityLogWithDetails, ...prev]);
@@ -113,14 +109,11 @@ export const useActivityLog = () => {
    * @param startTime - (Optional) Start time of a log (used for split timer).
    * @returns The started activity log entry or null if failed.
    */
-  const startTimer = async (activityId: string, startTime?: Date) => {
+  const startTimer = async (data: CreateTimerActivityLogPayload) => {
     try {
-      const startTimerLog = await activityLogService.startTimer(
-        activityId,
-        startTime,
-      );
+      const startTimerLog = await activityLogService.startTimer(data);
       const startTimerActivityLogWithDetails = saveActivityLogEntryWithDetails(
-        activityId,
+        data.activityId,
         startTimerLog,
       );
       setActivityLogs((prev) => [startTimerActivityLogWithDetails, ...prev]);
@@ -140,19 +133,16 @@ export const useActivityLog = () => {
    * @param endTime - (Optional) End time of a log (used for split timer).
    * @returns The stopped activity log entry or null if failed.
    */
-  const stopTimer = async (activityLogId: string, endTime?: Date) => {
+  const stopTimer = async (data: StopTimerActivityLogPayload) => {
     try {
-      const endTimerLog = await activityLogService.stopTimer(
-        activityLogId,
-        endTime,
-      );
+      const endTimerLog = await activityLogService.stopTimer(data);
       const endTimerActivityLogWithDetails = saveActivityLogEntryWithDetails(
         endTimerLog.activityId,
         endTimerLog,
       );
       setActivityLogs((prev) =>
         prev.map((log) =>
-          log._id === activityLogId ? endTimerActivityLogWithDetails : log,
+          log._id === data._id ? endTimerActivityLogWithDetails : log,
         ),
       );
 

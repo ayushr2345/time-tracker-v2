@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { Trash2, Edit2 } from "lucide-react";
-import type { ActivityWithLogCount } from "../types/activity";
+import type { ActivityWithLogCount } from "@time-tracker/shared";
 
 interface ActivityItemProps {
   /** The activity object to display. */

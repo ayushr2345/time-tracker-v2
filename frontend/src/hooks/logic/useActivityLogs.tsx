@@ -13,7 +13,7 @@ import { APP_CONFIG } from "../../constants";
 import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
 import { useConfirm } from "../ui/useConfirmToast";
-import type { ActivityLogsWithDetails } from "../../types/activityLog";
+import type { ActivityLogsWithDetails } from "@time-tracker/shared";
 
 // --- Utility Functions (Pure) ---
 

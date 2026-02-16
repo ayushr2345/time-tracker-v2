@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@time-tracker/shared": "^1.0.0",
     "axios": "^1.13.2",
     "dotenv": "^17.3.1",
     "lucide-react": "^0.563.0",

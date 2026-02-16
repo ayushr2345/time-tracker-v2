@@ -1,6 +1,8 @@
 import type { JSX } from "react";
-import type { ActivityLogsWithDetails } from "../types/activityLog";
-import type { ActivityWithLogCount } from "../types/activity";
+import type {
+  ActivityWithLogCount,
+  ActivityLogsWithDetails,
+} from "@time-tracker/shared";
 import { Trash2 } from "lucide-react";
 import { APP_CONFIG } from "../constants";
 import { formatDate, formatDuration, getTier } from "../utils";

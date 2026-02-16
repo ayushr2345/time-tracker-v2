@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { ActivityLogsWithDetails } from "../../types/activityLog";
+import type { ActivityLogsWithDetails } from "@time-tracker/shared";
 import { formatDate, getTier } from "../../utils";
 
 export interface DayData {

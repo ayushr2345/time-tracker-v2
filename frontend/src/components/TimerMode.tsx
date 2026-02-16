@@ -289,3 +289,5 @@ function TimerMode(): JSX.Element {
 }
 
 export default TimerMode;
+
+// TODO: timer start --> reset --> cancel --> resume (not working)

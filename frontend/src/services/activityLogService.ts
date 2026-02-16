@@ -5,8 +5,13 @@
  * Provides methods for CRUD operations and timer-specific actions.
  */
 import apiClient from "./apiClient";
-import type { ActivityLogEntry } from "../types/activityLog";
-import type { ActivityLogsWithDetails } from "../types/activityLog";
+import type {
+  ActivityLogEntry,
+  ActivityLogsWithDetails,
+  CreateManualActivityLogPayload,
+  CreateTimerActivityLogPayload,
+  StopTimerActivityLogPayload,
+} from "@time-tracker/shared";
 
 export const activityLogService = {
   /**
@@ -32,16 +37,11 @@ export const activityLogService = {
    * @returns A promise that resolves to the newly created ActivityLogEntry.
    */
   createManualLogEntry: async (
-    activityId: string,
-    startTime: Date,
-    endTime: Date,
+    data: CreateManualActivityLogPayload,
   ): Promise<ActivityLogEntry> => {
     const response = await apiClient.post<ActivityLogEntry>(
-      `/activity-logs/createManualEntryLog/${activityId}`,
-      {
-        startTime,
-        endTime,
-      },
+      `/activity-logs/createManualEntryLog/${data.activityId}`,
+      data,
     );
     return response.data;
   },
@@ -54,12 +54,11 @@ export const activityLogService = {
    * @returns A promise resolving to the new "active" activity log entry.
    */
   startTimer: async (
-    activityId: string,
-    startTime?: Date,
+    data: CreateTimerActivityLogPayload,
   ): Promise<ActivityLogEntry> => {
     const response = await apiClient.post<ActivityLogEntry>(
-      `/activity-logs/startTimer/${activityId}`,
-      startTime ? { startTime } : {},
+      `/activity-logs/startTimer/${data.activityId}`,
+      data.startTime ? { startTime: data.startTime } : {},
     );
     return response.data;
   },
@@ -72,12 +71,11 @@ export const activityLogService = {
    * @returns A promise resolving to the completed log entry with the final duration.
    */
   stopTimer: async (
-    activityLogId: string,
-    endTime?: Date,
+    data: StopTimerActivityLogPayload,
   ): Promise<ActivityLogEntry> => {
     const response = await apiClient.patch<ActivityLogEntry>(
-      `/activity-logs/stopTimer/${activityLogId}`,
-      endTime ? { endTime } : {},
+      `/activity-logs/stopTimer/${data._id}`,
+      data.endTime ? { endTime: data.endTime } : {},
     );
     return response.data;
   },

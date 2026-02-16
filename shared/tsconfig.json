@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declaration": true /* Generates .d.ts files! Critical. */,
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true
+  },
+  "include": ["src/**/*"]
+}

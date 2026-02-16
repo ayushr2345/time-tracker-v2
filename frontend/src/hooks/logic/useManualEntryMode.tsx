@@ -5,6 +5,7 @@ import { useActivityLog } from "../data/useActivityLog";
 import { useConfirm } from "../ui/useConfirmToast";
 import type { ConfirmToastType } from "../../components/ConfirmToast";
 import { APP_CONFIG } from "../../constants";
+import type { CreateManualActivityLogPayload } from "@time-tracker/shared";
 
 /**
  * Custom hook for managing manual entry mode logic.
@@ -149,17 +150,19 @@ export const useManualEntryMode = () => {
     const { startTimeDate, endTimeDate, message, toastType, activityName } =
       data;
 
+    const manualEntryPayload: CreateManualActivityLogPayload = {
+      activityId: selectedActivityId,
+      startTime: startTimeDate,
+      endTime: endTimeDate,
+    };
+
     confirm({
       title: `Confirm Entry for ${activityName}`,
       message: message,
       type: toastType,
       confirmText: "Yes, Add Entry",
       onConfirm: async () => {
-        const success = await createManualLogEntry(
-          selectedActivityId,
-          startTimeDate,
-          endTimeDate,
-        );
+        const success = await createManualLogEntry(manualEntryPayload);
         if (success) {
           // Reset Form
           setSelectedActivityId("");

@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import type { Activity, ActivityWithLogCount } from "../../types/activity";
+import type {
+  Activity,
+  ActivityWithLogCount,
+  CreateActivityPayload,
+  UpdateActivityPayload,
+} from "@time-tracker/shared";
 import { useActivities } from "../data/useActivities";
 import { useConfirm } from "../ui/useConfirmToast";
 import { APP_CONFIG } from "../../constants";
@@ -58,10 +63,11 @@ export const useActivitiesForm = () => {
    * Internal handler for creating a new activity.
    */
   const createNewActivity = async () => {
-    const success = await addActivity({
+    const activityPayload: CreateActivityPayload = {
       name: name.trim(),
       color: selectedColor,
-    });
+    };
+    const success = await addActivity(activityPayload);
     if (success) {
       resetForm();
     }
@@ -73,13 +79,12 @@ export const useActivitiesForm = () => {
   const updateExistingActivity = async () => {
     if (!editingId) return;
 
-    const updatedActivity: Activity = {
-      _id: editingId,
+    const updatedActivity: UpdateActivityPayload = {
       name: name.trim(),
       color: selectedColor,
     };
 
-    const success = await updateActivity(updatedActivity);
+    const success = await updateActivity(editingId, updatedActivity);
     if (success) {
       resetForm();
     }

@@ -14,6 +14,7 @@
   - [x] **Component Optimization:** Removed logic from presentation components (e.g., `ActivityLogItem`).
   - [x] **Type Safety:** Added explicit return types and interfaces to all components/hooks.
   - [x] **Documentation:** Added TSDoc comments to all exported functions and hooks.
+- [x] **Migrate Backend to TypeScript:**
 - [ ] **Unit Testing Setup (Frontend):**
   - [x] Install Vitest & React Testing Library.
   - [ ] Create simple smoke test (`App.test.tsx`).
@@ -23,6 +24,7 @@
   - [x] Write unit tests for `utils.tsx` (`utils.test.tsx`).
   - [x] Create test for logic hooks useManualEntryMode.tsx (`useManualEntryMode.test.tsx`).
   - [ ] Write unit tests for Heatmap calculation logic (date grouping).
+- [ ] **Critical Logic Tests (Backend):**
 - [ ] **CI Pipeline:**
   - [ ] Create `.github/workflows/ci.yml`.
   - [ ] Configure GitHub Actions to run Lint + Tests on every push to `master`.

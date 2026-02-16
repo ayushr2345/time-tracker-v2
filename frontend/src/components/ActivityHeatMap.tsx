@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { useActivityHeatMap } from "../hooks/logic/useActivityHeatMap";
-import type { ActivityLogsWithDetails } from "../types/activityLog";
+import type { ActivityLogsWithDetails } from "@time-tracker/shared";
 
 export interface ActivityHeatMapProps {
   /** The raw activity logs to visualize */

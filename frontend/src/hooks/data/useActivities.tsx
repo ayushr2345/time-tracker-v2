@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import type { Activity, ActivityWithLogCount } from "../../types/activity";
+import type {
+  ActivityWithLogCount,
+  CreateActivityPayload,
+  UpdateActivityPayload,
+} from "@time-tracker/shared";
 import { activityService } from "../../services";
 import { HTTP_STATUS } from "../../constants";
 
@@ -44,7 +48,7 @@ export const useActivities = () => {
    * @param newActivity - Activity data to create (name and color).
    * @returns True if activity was successfully created, false otherwise.
    */
-  const addActivity = async (newActivity: Omit<Activity, "_id">) => {
+  const addActivity = async (newActivity: CreateActivityPayload) => {
     try {
       const savedActivity = await activityService.createActivity(newActivity);
       const savedActivityWithLogCount: ActivityWithLogCount = {
@@ -107,12 +111,19 @@ export const useActivities = () => {
 
   /**
    * Updates an activity with error handling and state update.
+   * @param activityId - The activity id to be updated.
    * @param activity - The activity object containing updated name and color.
    * @returns True if activity was successfully updated, false otherwise.
    */
-  const updateActivity = async (activity: Activity) => {
+  const updateActivity = async (
+    activityId: string,
+    activity: UpdateActivityPayload,
+  ) => {
     try {
-      const updatedActivity = await activityService.updateActivity(activity);
+      const updatedActivity = await activityService.updateActivity(
+        activityId,
+        activity,
+      );
       // Note: We preserve the existing logCount since the update endpoint might not return it
       setActivities((prev) =>
         prev.map((a) =>
