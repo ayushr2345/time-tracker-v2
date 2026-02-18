@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import { ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useActivitiesForm } from "../hooks/logic/useActivitiesForm";
-import { APP_CONFIG } from "../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 import LoadingSpinner from "./LoadingSpinner";
 import { Target, Plus, Palette, Edit2, Save, X } from "lucide-react";
 import ActivityItemForActivities from "./ActivityItemForActivities";
@@ -99,12 +99,12 @@ function Activities(): JSX.Element {
                 type="text"
                 placeholder="e.g. Coding, Reading, Workout..."
                 value={name}
-                maxLength={APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH}
+                maxLength={APP_LIMITS.MAX_ACTIVITY_NAME_LENGTH}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-5 py-3.5 rounded-xl bg-gray-950/50 border border-white/10 text-white placeholder:text-gray-600 focus:bg-gray-900 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
               />
               <div className="absolute right-3 bottom-3 text-[10px] text-gray-600 font-mono">
-                {name.length}/{APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH}
+                {name.length}/{APP_LIMITS.MAX_ACTIVITY_NAME_LENGTH}
               </div>
             </div>
           </div>

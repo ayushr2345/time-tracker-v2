@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Activity, { ActivityDocument } from "../models/activity.js";
-import { APP_CONFIG, HTTP_STATUS, MONGO_DB_ERRORS } from "../constants.js";
+import { HTTP_STATUS, APP_LIMITS, MONGO_DB_ERRORS } from "@time-tracker/shared";
 import {
   ActivityWithLogCount,
   CreateActivityPayload,
@@ -68,8 +68,8 @@ export const createActivity = async (
     }
 
     const newActivity = new Activity({
-      name: name.trim().slice(0, APP_CONFIG.MAX_ACTIVITY_NAME_LENGTH),
-      color: color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+      name: name.trim().slice(0, APP_LIMITS.MAX_ACTIVITY_NAME_LENGTH),
+      color: color || APP_LIMITS.DEFAULT_ACTIVITY_COLOR,
     });
 
     await newActivity.save();

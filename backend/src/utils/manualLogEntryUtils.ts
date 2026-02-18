@@ -1,4 +1,4 @@
-import { APP_CONFIG } from "../constants.js";
+import { APP_LIMITS } from "@time-tracker/shared";
 import ActivityLog from "../models/activityLog.js";
 import { ActivityDocument } from "../models/activity.js";
 
@@ -64,10 +64,10 @@ export const validateTimeInputs = (
 
   const durationMs = end.getTime() - start.getTime();
 
-  if (durationMs < APP_CONFIG.MIN_ACTIVITY_DURATION_MS) {
+  if (durationMs < APP_LIMITS.MIN_ACTIVITY_DURATION_MS) {
     return "Activity Duration must be at least 5 minutes.";
   }
-  if (durationMs > APP_CONFIG.MAX_ACTIVITY_DURATION_MS) {
+  if (durationMs > APP_LIMITS.MAX_ACTIVITY_DURATION_MS) {
     return "Activity Duration cannot exceed 24 Hours.";
   }
 

@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { APP_CONFIG } from "../constants.js";
+import { APP_LIMITS } from "@time-tracker/shared";
 import { Activity } from "@time-tracker/shared";
 
 /**
@@ -53,7 +53,7 @@ const activitySchema = new Schema<ActivityDocument>(
     color: {
       type: String,
       required: true,
-      default: APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+      default: APP_LIMITS.DEFAULT_ACTIVITY_COLOR,
     },
   },
   {

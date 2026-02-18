@@ -15,15 +15,26 @@
   - [x] **Type Safety:** Added explicit return types and interfaces to all components/hooks.
   - [x] **Documentation:** Added TSDoc comments to all exported functions and hooks.
 - [x] **Migrate Backend to TypeScript:**
-- [ ] **Unit Testing Setup (Frontend):**
+- [x] **Add a shared library:**
+  - [x] **Types:** Add type definitions in shared library and use it in code.
+  - [x] **Constants:** Add constants from frontend and backend to shared library
+- [x] **Unit Testing Setup (Frontend):**
   - [x] Install Vitest & React Testing Library.
-  - [ ] Create simple smoke test (`App.test.tsx`).
-- [ ] **Unit Testing Setup (Backend):**
-  - [ ] Install testing library and start writing tests
+  - [x] Create simple smoke test (`App.test.tsx`).
 - [ ] **Critical Logic Tests (Frontend):**
   - [x] Write unit tests for `utils.tsx` (`utils.test.tsx`).
-  - [x] Create test for logic hooks useManualEntryMode.tsx (`useManualEntryMode.test.tsx`).
-  - [ ] Write unit tests for Heatmap calculation logic (date grouping).
+  - [ ] **Logic Hooks Tests:**
+    - [ ] Write unit tests for data hook useActivities.tsx (`useActivities.test.tsx`).
+    - [ ] Write unit tests for data hook useActivityLog.tsx (`useActivityLog.test.tsx`).
+  - [ ] **Logic Hooks Tests:**
+    - [x] Write unit tests for logic hook useManualEntryMode.tsx (`useManualEntryMode.test.tsx`).
+    - [ ] Write unit tests for logic hook useTimerMode.tsx (`useTimerMode.test.tsx`).
+    - [ ] Write unit tests for logic hook useOverview.tsx (`useOverview.test.tsx`).
+    - [ ] Write unit tests for logic hook useActivitiesForm.tsx (`useActivitiesForm.test.tsx`).
+    - [ ] Write unit tests for logic hook useActivityLog.tsx (`useActivityLog.test.tsx`).
+    - [ ] Write unit tests for logic hook useActivityHeatMap.tsx (`useActivityHeatMap.test.tsx`).
+- [ ] **Unit Testing Setup (Backend):**
+  - [ ] Install testing library and start writing tests
 - [ ] **Critical Logic Tests (Backend):**
 - [ ] **CI Pipeline:**
   - [ ] Create `.github/workflows/ci.yml`.

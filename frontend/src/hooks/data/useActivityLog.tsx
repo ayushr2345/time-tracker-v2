@@ -11,7 +11,7 @@ import type {
 } from "@time-tracker/shared";
 import { useActivities } from "./useActivities";
 import { activityLogService } from "../../services";
-import { HTTP_STATUS, APP_CONFIG } from "../../constants";
+import { APP_LIMITS, HTTP_STATUS } from "@time-tracker/shared";
 
 /**
  * Custom hook for managing activity logs and timer operations.
@@ -56,7 +56,7 @@ export const useActivityLog = () => {
     const updatedActivityLogWithDetails: ActivityLogsWithDetails = {
       ...updatedActivityLog,
       activityName: activityName || "Activity-Undefined",
-      activityColor: activityColor || APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+      activityColor: activityColor || APP_LIMITS.DEFAULT_ACTIVITY_COLOR,
     };
     return updatedActivityLogWithDetails;
   };

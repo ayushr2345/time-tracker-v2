@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import env from "dotenv";
 env.config();
 
+// TODO: Add mongo db uri here and use here...
+
 /**
  * The MongoDB connection string.
  * Retrieves the URI from the `MONGO_URI` environment variable.

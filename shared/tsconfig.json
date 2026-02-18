@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "./dist",
-    "declaration": true /* Generates .d.ts files! Critical. */,
-    "target": "es2020",
-    "module": "commonjs",
+    "declaration": true,
     "strict": true
-  },
-  "include": ["src/**/*"]
+  }
 }

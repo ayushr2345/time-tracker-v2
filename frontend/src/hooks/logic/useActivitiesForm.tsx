@@ -9,7 +9,7 @@ import type {
 } from "@time-tracker/shared";
 import { useActivities } from "../data/useActivities";
 import { useConfirm } from "../ui/useConfirmToast";
-import { APP_CONFIG } from "../../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 
 /**
  * Custom hook for managing the activities form logic.
@@ -35,7 +35,7 @@ export const useActivitiesForm = () => {
   const { confirm } = useConfirm();
   const [name, setName] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>(
-    APP_CONFIG.DEFAULT_ACTIVITY_COLOR,
+    APP_LIMITS.DEFAULT_ACTIVITY_COLOR,
   );
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -55,7 +55,7 @@ export const useActivitiesForm = () => {
    */
   const resetForm = () => {
     setName("");
-    setSelectedColor(APP_CONFIG.DEFAULT_ACTIVITY_COLOR);
+    setSelectedColor(APP_LIMITS.DEFAULT_ACTIVITY_COLOR);
     setEditingId(null);
   };
 

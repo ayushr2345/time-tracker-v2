@@ -4,7 +4,7 @@ import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
 import type { ActivityLogEntry } from "@time-tracker/shared";
 import { useConfirm } from "../ui/useConfirmToast";
-import { APP_CONFIG } from "../../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 import { formatDuration } from "../../utils";
 import type {
   CreateTimerActivityLogPayload,
@@ -130,9 +130,9 @@ export const useTimerMode = () => {
     const startedAt = startRef.current ?? now;
     const duration = Math.round((now - startedAt) / 1000);
 
-    if (duration < APP_CONFIG.MIN_ACTIVITY_DURATION_MINS * 60) {
+    if (duration < APP_LIMITS.MIN_ACTIVITY_DURATION_MINS * 60) {
       toast.error(
-        `Duration too short to log (minimum ${APP_CONFIG.MIN_ACTIVITY_DURATION_MINS} minutes)`,
+        `Duration too short to log (minimum ${APP_LIMITS.MIN_ACTIVITY_DURATION_MINS} minutes)`,
       );
       return;
     }
@@ -398,7 +398,7 @@ export const useTimerMode = () => {
     // > 24 Hours: Auto-Stop
     if (
       activeLog.status === "active" &&
-      gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS
+      gapDuration >= APP_LIMITS.NO_TIMER_RECOVERY_BEYOND_THIS_MS
     ) {
       crashCheckRef.current = activeLog._id;
       (async () => {
@@ -411,7 +411,7 @@ export const useTimerMode = () => {
     // > 5 Minutes: User Confirmation
     if (
       activeLog.status === "active" &&
-      gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS
+      gapDuration > APP_LIMITS.MIN_GAP_DURATION_FOR_CONFIRMATION_MS
     ) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       crashCheckRef.current = activeLog._id;

@@ -9,7 +9,7 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
-import { APP_CONFIG } from "../../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
 import { useConfirm } from "../ui/useConfirmToast";
@@ -78,7 +78,7 @@ export const useActivityLogs = () => {
   const { activityLogs, deleteLogEntry } = useActivityLog();
   const { confirm } = useConfirm();
 
-  const itemsPerPage = APP_CONFIG.ACTIVITY_LOGS_PER_PAGE || 10;
+  const itemsPerPage = APP_LIMITS.ACTIVITY_LOGS_PER_PAGE;
 
   // State: Filters & Pagination
   const [currentPage, setCurrentPage] = useState(1);

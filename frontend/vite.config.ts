@@ -2,13 +2,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { APP_CONFIG } from "./src/constants";
+import { DEFAULT_PORTS } from "@time-tracker/shared";
+
+// TODO: Add port inside env file and use here
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: APP_CONFIG.DEFAULT_PORT,
+    port: DEFAULT_PORTS.DEFAULT_PORT_FRONTEND,
   },
   test: {
     globals: true,

@@ -8,7 +8,7 @@ import type {
   UpdateActivityPayload,
 } from "@time-tracker/shared";
 import { activityService } from "../../services";
-import { HTTP_STATUS } from "../../constants";
+import { HTTP_STATUS } from "@time-tracker/shared";
 
 /**
  * Custom hook for managing activities data and operations.

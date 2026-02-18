@@ -13,7 +13,7 @@ import {
   History,
   ChevronDown,
 } from "lucide-react";
-import { APP_CONFIG } from "../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 
 /**
  * Formats seconds into HH:MM:SS time format.
@@ -61,7 +61,7 @@ function TimerMode(): JSX.Element {
   // Helper to find selected activity color
   const currentActivity = activities.find((a) => a._id === selectedActivityId);
   const activeColor =
-    currentActivity?.color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
+    currentActivity?.color || APP_LIMITS.DEFAULT_ACTIVITY_COLOR;
 
   // --- Render ---
   if (loading && activities.length === 0) {

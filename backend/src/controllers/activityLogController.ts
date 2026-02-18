@@ -11,7 +11,7 @@ import {
   getActivityLog,
   calculateTotalPauseDurationInMs,
 } from "../utils/timerModeEntryUtils.js";
-import { APP_CONFIG, HTTP_STATUS } from "../constants.js";
+import { HTTP_STATUS, APP_LIMITS } from "@time-tracker/shared";
 
 // Helper type for the aggregation result in getActivityLogs
 interface ActivityLogWithDetails extends ActivityLogDocument {
@@ -567,8 +567,8 @@ export const resumeCrashedTimer = async (
 
     // Gap Logic: 5 mins < Gap < 24 Hours
     if (
-      gapDuration > APP_CONFIG.MIN_GAP_DURATION_FOR_CONFIRMATION_MS &&
-      gapDuration < APP_CONFIG.MAX_GAP_DURATION_FOR_CONFIRMATION_MS
+      gapDuration > APP_LIMITS.MIN_GAP_DURATION_FOR_CONFIRMATION_MS &&
+      gapDuration < APP_LIMITS.MAX_GAP_DURATION_FOR_CONFIRMATION_MS
     ) {
       console.log(
         `[Recovery] Gap detected: ${Math.floor(gapDuration / (60 * 1000))} min. Injecting pause.`,
@@ -589,7 +589,7 @@ export const resumeCrashedTimer = async (
       return res.status(HTTP_STATUS.OK).json(savedLog);
     }
     // Abandon Logic: Gap > 24 Hours
-    else if (gapDuration >= APP_CONFIG.NO_TIMER_RECOVERY_BEYOND_THIS_MS) {
+    else if (gapDuration >= APP_LIMITS.NO_TIMER_RECOVERY_BEYOND_THIS_MS) {
       console.log(
         `[Recovery] Timer abandoned (>24h). Auto-stopping at last heartbeat.`,
       );
@@ -606,7 +606,7 @@ export const resumeCrashedTimer = async (
       const validDurationSec = Math.max(0, Math.round(validDurationMs / 1000));
 
       // Only save if it meets minimum duration criteria
-      if (validDurationMs >= APP_CONFIG.MIN_ACTIVITY_DURATION_MS) {
+      if (validDurationMs >= APP_LIMITS.MIN_ACTIVITY_DURATION_MS) {
         activityLog.endTime = lastHeartbeat;
         activityLog.status = "completed";
         activityLog.duration = validDurationSec;

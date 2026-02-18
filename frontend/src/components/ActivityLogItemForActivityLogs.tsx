@@ -4,7 +4,7 @@ import type {
   ActivityLogsWithDetails,
 } from "@time-tracker/shared";
 import { Trash2 } from "lucide-react";
-import { APP_CONFIG } from "../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 import { formatDate, formatDuration, getTier } from "../utils";
 
 export interface ActivityLogItemProps {
@@ -36,7 +36,7 @@ function ActivityLogItemForActivityLogs({
 
   const activityName = log.activityName || activity?.name || "Unknown Activity";
   const activityColor =
-    log.activityColor || activity?.color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
+    log.activityColor || activity?.color || APP_LIMITS.DEFAULT_ACTIVITY_COLOR;
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();

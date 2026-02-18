@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useManualEntryMode } from "../hooks/logic/useManualEntryMode";
 import LoadingSpinner from "./LoadingSpinner";
 import { Edit3, Zap, Calendar, Clock, Save, ChevronDown } from "lucide-react";
-import { APP_CONFIG } from "../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 
 /**
  * A form component for logging past activities manually.
@@ -32,7 +32,7 @@ function ManualEntryMode(): JSX.Element {
   // Helper: Find selected activity color for UI accents
   const currentActivity = activities.find((a) => a._id === selectedActivityId);
   const activeColor =
-    currentActivity?.color || APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
+    currentActivity?.color || APP_LIMITS.DEFAULT_ACTIVITY_COLOR;
 
   // Helper: Create a synthetic event for the day toggle buttons
   const handleDayClick = (day: string) => {

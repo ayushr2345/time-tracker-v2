@@ -4,7 +4,7 @@ import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
 import { useConfirm } from "../ui/useConfirmToast";
 import type { ConfirmToastType } from "../../components/ConfirmToast";
-import { APP_CONFIG } from "../../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 import type { CreateManualActivityLogPayload } from "@time-tracker/shared";
 
 /**
@@ -114,13 +114,13 @@ export const useManualEntryMode = () => {
       (a) => a._id === selectedActivityId,
     )?.name;
 
-    if (durationMs < APP_CONFIG.MIN_ACTIVITY_DURATION_MS) {
+    if (durationMs < APP_LIMITS.MIN_ACTIVITY_DURATION_MS) {
       toast.error("At least 5 minutes of activity duration is required.");
       return null;
     }
 
     // Redundant currently. To be used when implementing multi day entry for manual entry mode.
-    if (durationMs > APP_CONFIG.MAX_ACTIVITY_DURATION_MS) {
+    if (durationMs > APP_LIMITS.MAX_ACTIVITY_DURATION_MS) {
       toast.error("Activity duration cannot exceed 24 hours.");
       return null;
     }
@@ -129,7 +129,7 @@ export const useManualEntryMode = () => {
     let message = `The duration you entered is ${durationStr}. Are you sure you want to add this entry to "${activityName}"?`;
     let toastType: ConfirmToastType = "INFO";
 
-    if (durationMs > APP_CONFIG.LONG_ACTIVITY_DURATION_MS) {
+    if (durationMs > APP_LIMITS.LONG_ACTIVITY_DURATION_MS) {
       const hours = (durationMs / (1000 * 60 * 60)).toFixed(1);
       toast.warning("Logging high duration. Please confirm");
       message = `The duration you entered is ${hours} hours, which is unusually long. Are you sure you want to add this entry to "${activityName}"?`;

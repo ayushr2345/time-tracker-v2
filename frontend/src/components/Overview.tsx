@@ -23,7 +23,7 @@ import { formatDate, formatDuration, getTier } from "../utils";
 import { useOverview } from "../hooks/logic/useOverview";
 import LoadingSpinner from "./LoadingSpinner";
 import ActivityHeatmap from "./ActivityHeatMap";
-import { APP_CONFIG } from "../constants";
+import { APP_LIMITS } from "@time-tracker/shared";
 
 /**
  * The main dashboard view.
@@ -305,7 +305,7 @@ function Overview(): JSX.Element {
                   const activityColor =
                     log.activityColor ||
                     activity?.color ||
-                    APP_CONFIG.DEFAULT_ACTIVITY_COLOR;
+                    APP_LIMITS.DEFAULT_ACTIVITY_COLOR;
 
                   return (
                     <div

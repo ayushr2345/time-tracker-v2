@@ -11,14 +11,14 @@ import connectDB from "./config/db.config.js";
 
 import activityRoutes from "./routes/activityRoutes.js";
 import activityLogRoutes from "./routes/activityLogRoutes.js";
-import { APP_CONFIG } from "./constants.js";
+import { DEFAULT_PORTS } from "@time-tracker/shared";
 
 /**
  * Configuration & Setup
  */
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT || APP_CONFIG.DEFAULT_PORT;
+const PORT = process.env.PORT || DEFAULT_PORTS.DEFAULT_PORT_BACKEND;
 
 /**
  * Database Connection
