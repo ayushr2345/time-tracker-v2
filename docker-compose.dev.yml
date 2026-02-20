@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: dev
+    ports:
+      - "5050:5050"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://dev-mongo:27017/time-tracker
+    depends_on:
+      - dev-mongo
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dev
+    ports:
+      - "5051:5051"
+    environment:
+      - VITE_API_BASE_URL=http://backend:5050
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app/frontend
+      - ./shared:/app/shared
+    restart: unless-stopped
+
+  dev-mongo:
+    image: mongo:latest
+    container_name: dev-time-tracker-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - dev_mongo_data:/data/db
+      # Mount the folder containing the .gz file
+      - ./seed:/seed-data:ro 
+      # Mount the bash script into the magic init folder
+      - ./seed/init-backup.sh:/docker-entrypoint-initdb.d/init-backup.sh:ro
+    restart: unless-stopped
+
+  mongo-backup:
+    image: mongo:latest
+    container_name: dev-time-tracker-backup
+    depends_on:
+      - dev-mongo
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      /bin/bash -c "
+        while true; do
+          echo 'Starting daily MongoDB backup...';
+          mongodump --uri='mongodb://dev-mongo:27017/time-tracker' --archive=/backups/dev-backup-$$(date +%Y-%m-%d_%H-%M).gz --gzip;
+          echo 'Backup complete. Sleeping for 24 hours.';
+          sleep 86400;
+        done
+      "
+    restart: unless-stopped
+
+volumes:
+  dev_mongo_data:
+
+
+# TODO: Seed data, create seed folder, paste the dev data, and init script
+# Test both Prod and Dev docker env and deploy locally

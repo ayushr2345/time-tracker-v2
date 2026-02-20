@@ -1,13 +1,9 @@
 import axios from "axios";
-import dotenv from "dotenv";
+import { DEFAULT_PORTS } from "@time-tracker/shared";
 
-// TODO: Add env here
-// TODO: Default to which API?
-
-// dotenv.config();
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://localhost:${DEFAULT_PORTS.DEFAULT_PORT_BACKEND}/api`;
 const apiClient = axios.create({
-  // baseURL: process.env.API_BASE_URL,
-  baseURL: "http://localhost:5001/api",
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },

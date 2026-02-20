@@ -42,9 +42,12 @@
 
 ## Phase 3: Infrastructure & DevOps
 - [ ] **Dockerization:**
-  - [ ] Create `Dockerfile` for Frontend and Backend.
-  - [ ] Create `docker-compose.yml` to spin up the full stack (App + DB) with one command.
-- [ ] **Environment Config:** Standardize `.env` variables for Dev vs. Prod.
+  - [x] Create `Dockerfile` for Frontend and Backend.
+  - [x] Create `docker-compose.prod.yml` to spin up the full stack (App + DB) with one command for prod.
+  - [x] Add restart on every system restart.
+  - [x] Add backup of mongo data every 24H.
+  - [ ] Create `docker-compose.dev.yml` to spin up the full stack (App + DB) with one command for dev.
+  - [ ] Add dummy data for dev environment and restore the dummy data on every dev container bring up.
 
 ## Phase 4: Expansion (Features v2.0)
 - [ ] **Improvement:** Allow Multi Day entry for Manual Entry Mode with splitting.

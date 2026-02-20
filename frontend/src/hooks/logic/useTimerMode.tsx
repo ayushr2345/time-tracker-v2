@@ -373,7 +373,7 @@ export const useTimerMode = () => {
             startTime: startOfNextDay,
           };
           const stopTimerEntryPayload: StopTimerActivityLogPayload = {
-            _id: activeLog.activityId,
+            _id: activeLog._id,
             endTime: endOfLogDate,
           };
           await stopTimer(stopTimerEntryPayload);
@@ -519,3 +519,5 @@ export const useTimerMode = () => {
     handleResetTimer,
   };
 };
+
+// TODO: Midnight split and crash recovery logic interfering when timer started and not stopped, returned after midnight..
