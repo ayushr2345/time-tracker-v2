@@ -35,7 +35,8 @@ services:
       # The VITE_API_BASE_URL is permanently baked into the minified Javascript files.
       args:
         FRONTEND_PORT: ${FRONTEND_PORT:-5051}
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:${BACKEND_PORT:-5050}/api}
+        BACKEND_PORT: ${BACKEND_PORT:-5050}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     ports:
       # Maps your chosen external port (e.g., 5051) to Nginx's internal port (80).
       # Nginx always listens on 80 natively, so the container port must remain 80.
