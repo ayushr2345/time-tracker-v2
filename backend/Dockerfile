@@ -1,7 +1,7 @@
 # ==========================================
 # 1. BASE STAGE (Dependencies only)
 # ==========================================
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 WORKDIR /app
 COPY package.json ./
 COPY backend/package.json ./backend/
@@ -31,7 +31,7 @@ RUN npm run build --workspace=backend
 # ==========================================
 # 4. PROD STAGE (Lean Node Runtime)
 # ==========================================
-FROM node:20-slim AS prod
+FROM node:24-slim AS prod
 WORKDIR /app
 
 # Copy the root package.json so the workspace context exists

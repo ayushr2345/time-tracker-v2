@@ -1,7 +1,7 @@
 # ==========================================
 # 1. BASE STAGE (Dependencies only)
 # ==========================================
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 WORKDIR /app
 COPY package.json ./
 COPY frontend/package.json ./frontend/
