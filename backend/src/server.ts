@@ -5,20 +5,23 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
-// ✅ FIX: Added .js extension (Required for ESM/TypeScript)
 import connectDB from "./config/db.config.js";
-
 import activityRoutes from "./routes/activityRoutes.js";
 import activityLogRoutes from "./routes/activityLogRoutes.js";
 import { DEFAULT_PORTS } from "@time-tracker/shared";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Recreate __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Configuration & Setup
  */
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 const app = express();
-const PORT = process.env.PORT || DEFAULT_PORTS.DEFAULT_PORT_BACKEND;
+const PORT = process.env.BACKEND_PORT || DEFAULT_PORTS.DEFAULT_PORT_BACKEND;
 
 /**
  * Database Connection

@@ -1,57 +1,89 @@
 services:
+  # ==========================================
+  # 1. PRODUCTION BACKEND (Lean Node Runtime)
+  # ==========================================
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      # Targets the 'prod' stage in the Dockerfile, stripping out devDependencies
+      # and running the compiled JavaScript via 'node dist/server.js'
       target: prod
+      args:
+        BACKEND_PORT: ${BACKEND_PORT:-5050}
     ports:
-      - "5050:5050"
+      - "${BACKEND_PORT:-5050}:${BACKEND_PORT:-5050}"
     environment:
+      # Signals to Express and other libraries to optimize for performance (caching, less logging)
       - NODE_ENV=production
+      # Uses Docker's internal DNS to route to the 'mongo' service name, not localhost
       - MONGO_URI=mongodb://mongo:27017/time-tracker
+      - BACKEND_PORT=${BACKEND_PORT:-5050}
     depends_on:
       - mongo
     restart: unless-stopped
 
+  # ==========================================
+  # 2. PRODUCTION FRONTEND (Static Nginx Server)
+  # ==========================================
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
       target: prod
+      # BUILD ARGS: Crucial for production. Vite compiles the React code into static files here.
+      # The VITE_API_BASE_URL is permanently baked into the minified Javascript files.
+      args:
+        FRONTEND_PORT: ${FRONTEND_PORT:-5051}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:${BACKEND_PORT:-5050}/api}
     ports:
-      - "5051:80"
-    environment:
-      - VITE_API_BASE_URL=http://backend:5050
+      # Maps your chosen external port (e.g., 5051) to Nginx's internal port (80).
+      # Nginx always listens on 80 natively, so the container port must remain 80.
+      - "${FRONTEND_PORT:-5051}:80"
     depends_on:
       - backend
     restart: unless-stopped
 
+  # ==========================================
+  # 3. PRODUCTION DATABASE 
+  # ==========================================
   mongo:
     image: mongo:latest
     container_name: time-tracker-mongo
     ports:
+      # Exposed strictly for direct database management (e.g., via MongoDB Compass)
       - "27017:27017"
     volumes:
+      # The production database lives here. 
+      # Completely physically isolated from the 'dev_mongo_data' volume.
       - mongo_data:/data/db
     restart: unless-stopped
 
+  # ==========================================
+  # 4. PRODUCTION AUTOMATED BACKUPS
+  # ==========================================
   mongo-backup:
     image: mongo:latest
     container_name: time-tracker-backup
     depends_on:
       - mongo
     volumes:
+      # Maps the container's backup folder directly to your physical hard drive
+      
+      # Ensures you don't lose your data if the Docker volumes are accidentally purged
       - ./backups:/backups
     entrypoint: >
       /bin/bash -c "
         while true; do
-          echo 'Starting daily MongoDB backup...';
+          echo 'Starting daily MongoDB production backup...';
+          # Dumps a timestamped, gzip-compressed snapshot of the database
           mongodump --uri='mongodb://mongo:27017/time-tracker' --archive=/backups/backup-$$(date +%Y-%m-%d_%H-%M).gz --gzip;
           echo 'Backup complete. Sleeping for 24 hours.';
-          sleep 86400;
+          sleep 86400; # 24 hours in seconds
         done
       "
     restart: unless-stopped
 
+# Declares the persistent volume for production
 volumes:
   mongo_data:

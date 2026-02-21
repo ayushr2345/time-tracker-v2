@@ -41,13 +41,15 @@
   - [ ] Configure GitHub Actions to run Lint + Tests on every push to `master`.
 
 ## Phase 3: Infrastructure & DevOps
-- [ ] **Dockerization:**
+- [x] **Dockerization:**
   - [x] Create `Dockerfile` for Frontend and Backend.
   - [x] Create `docker-compose.prod.yml` to spin up the full stack (App + DB) with one command for prod.
   - [x] Add restart on every system restart.
   - [x] Add backup of mongo data every 24H.
-  - [ ] Create `docker-compose.dev.yml` to spin up the full stack (App + DB) with one command for dev.
-  - [ ] Add dummy data for dev environment and restore the dummy data on every dev container bring up.
+  - [x] Create `docker-compose.dev.yml` to spin up the full stack (App + DB) with one command for dev.
+  - [x] Add dummy data for dev environment and restore the dummy data on every dev container bring up.
+- [x] **Dynamic Ports:**
+  - [x] Add Dynamic port support from single `.env` file at the root
 
 ## Phase 4: Expansion (Features v2.0)
 - [ ] **Improvement:** Allow Multi Day entry for Manual Entry Mode with splitting.

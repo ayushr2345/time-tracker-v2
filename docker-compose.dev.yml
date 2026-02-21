@@ -1,56 +1,85 @@
 services:
-  backend:
+  # ==========================================
+  # 1. BACKEND SERVICE (Node.js/Express)
+  # ==========================================
+  dev-backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
       target: dev
+      # 'args' are injected DURING the build phase (e.g., when running npm install)
+      # The ${VAR:-fallback} syntax means: Use BACKEND_PORT from .env if it exists, otherwise use 5050.
+      args:
+        BACKEND_PORT: ${BACKEND_PORT:-5050}
     ports:
-      - "5050:5050"
+      # Maps your physical port to the container's internal port
+      - "${BACKEND_PORT:-5050}:${BACKEND_PORT:-5050}"
     environment:
+      # 'environment' variables are injected AFTER the container boots up
       - NODE_ENV=development
+      # Forces the backend to talk to the isolated dev-mongo container, not your local database
       - MONGO_URI=mongodb://dev-mongo:27017/time-tracker
+      - BACKEND_PORT=${BACKEND_PORT:-5050}
     depends_on:
       - dev-mongo
     volumes:
+      # Mounts your live code into the container for instant hot-reloading via nodemon
       - ./backend:/app/backend
       - ./shared:/app/shared
     restart: unless-stopped
 
-  frontend:
+  # ==========================================
+  # 2. FRONTEND SERVICE (Vite/React)
+  # ==========================================
+  dev-frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
       target: dev
+      args:
+        FRONTEND_PORT: ${FRONTEND_PORT:-5051}
     ports:
-      - "5051:5051"
+      - "${FRONTEND_PORT:-5051}:${FRONTEND_PORT:-5051}"
     environment:
-      - VITE_API_BASE_URL=http://backend:5050
+      # Tells the browser where to route API calls. It dynamically catches the backend port.
+      - VITE_API_BASE_URL=http://localhost:${BACKEND_PORT:-5050}/api
+      - FRONTEND_PORT=${FRONTEND_PORT:-5051}
     depends_on:
-      - backend
+      - dev-backend
     volumes:
+      # Mounts live React code for Vite's HMR (Hot Module Replacement)
       - ./frontend:/app/frontend
       - ./shared:/app/shared
     restart: unless-stopped
 
+  # ==========================================
+  # 3. DATABASE SERVICE (MongoDB)
+  # ==========================================
   dev-mongo:
     image: mongo:latest
     container_name: dev-time-tracker-mongo
     ports:
-      - "27017:27017"
+      # Mapped to 27018 on the host machine to avoid clashing with a local standard MongoDB instance
+      - "27018:27017"
     volumes:
+      # Stores the database securely inside a persistent Docker volume
       - dev_mongo_data:/data/db
-      # Mount the folder containing the .gz file
-      - ./seed:/seed-data:ro 
-      # Mount the bash script into the magic init folder
+      # Mounts the initialization script and backup archive as read-only (ro)
+      - ./seed:/seed-data:ro
+      # Automatically executes the bash script on first boot to seed the database with test data
       - ./seed/init-backup.sh:/docker-entrypoint-initdb.d/init-backup.sh:ro
     restart: unless-stopped
 
-  mongo-backup:
+  # ==========================================
+  # 4. DATABASE BACKUP SERVICE (Cron Job)
+  # ==========================================
+  dev-mongo-backup:
     image: mongo:latest
     container_name: dev-time-tracker-backup
     depends_on:
       - dev-mongo
     volumes:
+      # Saves the daily .gz backups to a physical folder on the host hard drive
       - ./backups:/backups
     entrypoint: >
       /bin/bash -c "
@@ -63,9 +92,6 @@ services:
       "
     restart: unless-stopped
 
+# Declares the isolated volume used by the dev database
 volumes:
   dev_mongo_data:
-
-
-# TODO: Seed data, create seed folder, paste the dev data, and init script
-# Test both Prod and Dev docker env and deploy locally

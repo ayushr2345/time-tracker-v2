@@ -13,7 +13,9 @@ RUN npm install
 # ==========================================
 FROM base AS dev
 WORKDIR /app/backend
-EXPOSE 5050
+ARG BACKEND_PORT=5050
+ENV BACKEND_PORT=$BACKEND_PORT
+EXPOSE $BACKEND_PORT
 # Code is mounted via volume in dev mode
 CMD ["npm", "run", "dev"]
 
@@ -45,7 +47,9 @@ COPY --from=builder /app/backend/package.json ./backend/
 COPY --from=builder /app/backend/dist ./backend/dist
 
 WORKDIR /app/backend
-EXPOSE 5050
+ARG BACKEND_PORT=5050
+ENV BACKEND_PORT=$BACKEND_PORT
+EXPOSE $BACKEND_PORT
 
 # Start the compiled server
 CMD ["node", "dist/server.js"]
