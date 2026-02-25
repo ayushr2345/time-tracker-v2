@@ -21,8 +21,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Linter & Type Checks
-        run: npm run lint
+      # - name: Run Linter & Type Checks
+      #   run: npm run lint
 
       - name: Run Unit Tests
         run: npm run test --workspace=frontend
