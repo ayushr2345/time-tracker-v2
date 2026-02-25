@@ -20,6 +20,9 @@ jobs:
 
       - name: Install Monorepo Dependencies
         run: npm ci
+      
+      - name: Build Shared Library
+        run: npm run build --workspace=@time-tracker/shared
 
       # - name: Run Linter & Type Checks
       #   run: npm run lint
