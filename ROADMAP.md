@@ -53,6 +53,7 @@
 
 ## Phase 4: Expansion (Features v2.0)
 - [ ] **Improvement:** Allow Multi Day entry for Manual Entry Mode with splitting.
+- [ ] **Improvement:** Add multi-device support, if timer stopped on one device should be stopped in all.
 - [ ] **Authentication:** Implement OAuth (Google) and Email/Password login.
 - [ ] **User Profiles:** Settings page for user details and preferences.
 - [ ] **Gamification:**
