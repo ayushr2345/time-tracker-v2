@@ -18,8 +18,8 @@ jobs:
           node-version: 24
           cache: "npm"
 
-      - name: Install Frontend Dependencies
-        run: cd frontend && npm install
+      - name: Install Monorepo Dependencies
+        run: npm ci
 
       # - name: Run Linter & Type Checks
       #   run: npm run lint
