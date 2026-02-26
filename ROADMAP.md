@@ -36,9 +36,7 @@
 - [ ] **Unit Testing Setup (Backend):**
   - [ ] Install testing library and start writing tests
 - [ ] **Critical Logic Tests (Backend):**
-- [ ] **CI Pipeline:**
-  - [ ] Create `.github/workflows/ci.yml`.
-  - [ ] Configure GitHub Actions to run Lint + Tests on every push to `master`.
+
 
 ## Phase 3: Infrastructure & DevOps
 - [x] **Dockerization:**
@@ -50,6 +48,12 @@
   - [x] Add dummy data for dev environment and restore the dummy data on every dev container bring up.
 - [x] **Dynamic Ports:**
   - [x] Add Dynamic port support from single `.env` file at the root
+- [x] **CI Pipeline:**
+  - [x] Create `.github/workflows/ci.yml`.
+  - [x] Add branch rule to only merge to master with a Pull Request
+  - [x] Configure GitHub Actions to run test on merge to master.
+- [x] **CD Pipeline:**
+  - [x] Add deployment script to check for new commits every 1 minute and runs test before building the container.
 
 ## Phase 4: Expansion (Features v2.0)
 - [ ] **Improvement:** Allow Multi Day entry for Manual Entry Mode with splitting.
