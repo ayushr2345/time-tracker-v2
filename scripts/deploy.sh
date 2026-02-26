@@ -60,10 +60,13 @@ TEST_STATUS=$?
 if [ $TEST_STATUS -eq 0 ]; then
     echo "$(date): ✅ Tests PASSED! Proceeding with deployment..."
     
-    # Rebuild the prod containers. Docker cache makes this incredibly fast.
+    # 1. Spin down existing containers cleanly (prevents [yN] prompts)
+    docker-compose -f docker-compose.prod.yml down
+    
+    # 2. Rebuild and spin up the new containers
     docker-compose -f docker-compose.prod.yml up -d --build
     
-    # Clean up old dangling images to save disk space
+    # 3. Clean up old dangling images to save disk space
     docker image prune -f
     
     echo "$(date): 🚀 Deployment successful."
@@ -75,8 +78,7 @@ fi
 # ==========================================
 # 5. AUTO-UPDATE THE RUNNER
 # ==========================================
-# Copy the latest deployment script from the repo to the home directory
-# so it is ready for the next minute's cron job.
+# (Make sure there are no spaces in the file paths here!)
 cp $PROJECT_DIR/scripts/deploy.sh /home/ayushr2345/apps/deploy.sh
 chmod +x /home/ayushr2345/apps/deploy.sh
 
