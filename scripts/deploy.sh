@@ -11,8 +11,8 @@ BRANCH="master"
 # This ensures it can find 'npm', 'node', and 'docker'.
 export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/snap/bin
 # If you use NVM for node, uncomment the next two lines:
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 cd $PROJECT_DIR || { echo "Directory not found! Exiting."; exit 1; }
 
