@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useActivities } from "../data/useActivities";
 import { useActivityLog } from "../data/useActivityLog";
 import type { ActivityLogEntry } from "@time-tracker/shared";
@@ -28,7 +28,9 @@ type TimePeriod =
 export const useOverview = () => {
   const { activityLogs, loading: activityLogsLoading } = useActivityLog();
   const { activities, loading: activitiesLoading } = useActivities();
-
+  const [breakdownPeriod, setBreakdownPeriod] = useState<
+    "week" | "month" | "year"
+  >("week");
   // Define beautiful modern colors for charts
   const chartColors = [
     "#8b5cf6", // purple
@@ -214,5 +216,7 @@ export const useOverview = () => {
     isChartDataEmpty,
     recentLogs,
     summaryCards,
+    breakdownPeriod,
+    setBreakdownPeriod,
   };
 };
