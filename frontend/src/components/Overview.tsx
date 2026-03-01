@@ -49,6 +49,8 @@ function Overview(): JSX.Element {
     isChartDataEmpty,
     recentLogs,
     summaryCards,
+    breakdownPeriod,
+    setBreakdownPeriod,
   } = useOverview();
 
   const isLoading = activitiesLoading || activityLogsLoading;
@@ -66,14 +68,32 @@ function Overview(): JSX.Element {
     <div className="space-y-8 sm:space-y-12 animate-fade-in pb-12">
       {/* 1. Time Spent per Activity Cards */}
       <section className="space-y-6">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-4">
           <h2 className="text-3xl sm:text-4xl font-bold text-white flex items-center justify-center gap-3">
             <span className="text-3xl">📊</span>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
               Activity Breakdown
             </span>
           </h2>
-          <p className="text-gray-400 text-base font-medium">This Week</p>
+
+          {/* Modern Segmented Filter Control */}
+          <div className="flex items-center justify-center">
+            <div className="flex bg-gray-900/60 p-1 rounded-full border border-white/10 shadow-inner">
+              {(["week", "month", "year"] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setBreakdownPeriod(period)}
+                  className={`px-5 py-1.5 rounded-full text-sm font-medium capitalize transition-all duration-300 ${
+                    breakdownPeriod === period
+                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-white/10 shadow-sm"
+                      : "text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent"
+                  }`}
+                >
+                  This {period}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -93,11 +113,14 @@ function Overview(): JSX.Element {
             </div>
           ) : (
             activities.map((activity) => {
-              // Calculate specific time for this card
+              // Calculate specific time for this card based on the selected period
               const thisActivityLogs = activityLogs.filter(
                 (log) => log.activityId === activity._id,
               );
-              const totalTime = sumLogsByPeriod(thisActivityLogs, "week");
+              const totalTime = sumLogsByPeriod(
+                thisActivityLogs,
+                breakdownPeriod,
+              );
 
               return (
                 <div
@@ -124,7 +147,7 @@ function Overview(): JSX.Element {
                     </div>
                     <div className="space-y-1">
                       <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">
-                        Total This Week
+                        Total This {breakdownPeriod}
                       </p>
                       <p className="text-3xl font-mono font-bold text-white">
                         {formatTime(totalTime)}
