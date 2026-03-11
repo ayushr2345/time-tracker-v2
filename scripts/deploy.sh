@@ -61,10 +61,10 @@ if [ $TEST_STATUS -eq 0 ]; then
     echo "$(date): ✅ Tests PASSED! Proceeding with deployment..."
     
     # 1. Spin down existing containers cleanly (prevents [yN] prompts)
-    docker-compose -f docker-compose.prod.yml down
+    docker compose -f docker-compose.prod.yml down
     
     # 2. Rebuild and spin up the new containers
-    docker-compose -f docker-compose.prod.yml up -d --build
+    docker compose -f docker-compose.prod.yml up -d --build
     
     # 3. Clean up old dangling images to save disk space
     docker image prune -f
