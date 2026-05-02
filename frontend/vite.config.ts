@@ -8,7 +8,8 @@ import { DEFAULT_PORTS } from "@time-tracker/shared";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, "../", "");
   const backendPort = env.BACKEND_PORT || DEFAULT_PORTS.DEFAULT_PORT_BACKEND;
-  const apiBaseUrl = env.VITE_API_BASE_URL || `http://localhost:${backendPort}/api`;
+  const apiBaseUrl =
+    env.VITE_API_BASE_URL || `http://localhost:${backendPort}/api`;
   return {
     plugins: [react(), tailwindcss()],
     envDir: "../",
