@@ -364,7 +364,7 @@ describe("useActivityLog Hook", () => {
       vi.useFakeTimers();
 
       // MOCK_LOGS already has 'log-2' with status: "active"
-      const { result } = await setupHook();
+      await setupHook();
 
       // Ensure no calls initially
       expect(activityLogService.sendHeartbeat).not.toHaveBeenCalled();
