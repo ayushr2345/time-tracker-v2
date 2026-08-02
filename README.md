@@ -1,284 +1,187 @@
 <p align="center">
-  <a href="" rel="noopener">
- <img width=200px height=200px src="./frontend/public/favicon.ico" alt="Project logo"></a>
+  <a href="https://github.com/ayushr2345/time-tracker-v2" rel="noopener">
+    <img width="180" height="180" src="./frontend/public/favicon.ico" alt="Time Tracker logo" />
+  </a>
 </p>
 
-<h3 align="center">time-tracker-v2</h3>
+<h3 align="center">Time Tracker v2</h3>
 
-<div align="center">
+<p align="center">
+  A self-hosted, full-stack productivity tracker for capturing focused work, reviewing past activity, and visualizing trends over time.
+</p>
 
 <div align="center">
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
 [![GitHub Issues](https://img.shields.io/github/issues/ayushr2345/time-tracker-v2.svg)](https://github.com/ayushr2345/time-tracker-v2/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/ayushr2345/time-tracker-v2.svg)](https://github.com/ayushr2345/time-tracker-v2/pulls)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-</div>
 </div>
 
 ---
 
-<p align="center"> Few lines describing your project.
-    <br> 
-</p>
+## Overview
 
-## 📝 Table of Contents
+Time Tracker v2 is a modern monorepo application for personal productivity logging. It combines a real-time timer, retroactive manual entry, activity management, and a visual history dashboard into one cohesive experience.
 
-- [About](#about)
-- [Getting Started](#getting_started)
-- [Deployment](#deployment)
-- [Usage](#usage)
-- [Built Using](#built_using)
-- [Roadmap](./ROADMAP.md)
-- [Contributing](../CONTRIBUTING.md)
-- [Authors](#authors)
-- [Acknowledgments](#acknowledgement)
+The project is built to be practical and resilient:
 
-## 🧐 About <a name = "about"></a>
+- capture work as it happens with timer-based logging
+- add past sessions manually when you forget to start the timer
+- organize activities and review historical entries
+- visualize intensity with a GitHub-style contribution heatmap
+- run locally or self-host it with Docker
 
-The **Activity Tracker** is a full-stack, data-driven application designed to solve the "lost time" problem by providing a centralized hub for quantified-self logging. It bridges the gap between high-precision real-time timers and flexible manual logging, allowing users to capture their day's work with zero friction. Whether tracking coding sessions on a laptop or logging a gym session from a phone, the system ensures your data is consolidated and visually actionable through GitHub-style intensity heatmaps.
+## Key Features
 
-Engineered with a focus on self-hosting and resilience, this project utilizes a modern **TypeScript Monorepo** architecture to enforce total type safety from the database schema to the UI components. It is specifically hardened for deployment on low-power home servers (like a ThinkCentre) operating under restrictive network conditions, such as mobile hotspots. By utilizing mDNS for local discovery and automated container orchestration, it provides a "private cloud" experience that is both private and indestructible.
+- Real-time timer mode for live activity tracking
+- Manual entry mode for retroactive logging across dates and time ranges
+- Activity management for defining reusable categories and labels
+- Historical activity log views with delete/edit workflows
+- Intensity-based heatmap visualization for recurring patterns
+- Shared TypeScript models and constants across frontend, backend, and tooling
+- Docker-based development and production environments
+- Automated backup and restore workflow for MongoDB
 
+## Architecture
 
+This repository is organized as a TypeScript monorepo:
 
-## 🏁 Getting Started <a name = "getting_started"></a>
+- frontend: React + Vite + Tailwind UI
+- backend: Express + MongoDB + Mongoose API
+- shared: reusable types and constants used across the app
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. The project supports three distinct execution modes: **Native Local**, **Docker Dev** (sandboxed), and **Docker Prod** (optimized). See [deployment](#deployment) for notes on how to deploy the project on a live system.
+## Tech Stack
+
+- [React 19](https://react.dev/) with [Vite](https://vite.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Express.js](https://expressjs.com/)
+- [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- [ESLint](https://eslint.org/) and [Prettier](https://prettier.io/)
+
+## Getting Started
 
 ### Prerequisites
 
-To run this project, you need to have the following installed on your machine:
+Make sure the following are available on your machine:
 
-* **Node.js (v24 LTS):** The core runtime.
-* **NPM (v10+):** For managing the workspace and dependencies.
-* **Docker & Docker Compose:** Required for containerized environments.
-* **MongoDB Tools:** For manual database exports/restores.
+- Node.js 24 LTS
+- npm 10+
+- Docker and Docker Compose
+- MongoDB (for native local development)
+
+### 1. Clone the repository
 
 ```bash
-node -v # Should be v24.x.x
-npm -v  # Should be v10.x.x
-docker --version
-docker-compose --version # Or 'docker compose version'
+git clone https://github.com/ayushr2345/time-tracker-v2.git
+cd time-tracker-v2
 ```
 
-### Installing
+### 2. Install dependencies
 
-A step-by-step series of examples that tell you how to get a development environment running.
+```bash
+npm install
+```
 
-1. Clone the repository to your local machine
-    ```bash
-    git clone https://github.com/ayushr2345/time-tracker-v2.git
-    cd time-tracker-v2
-    ```
+### 3. Configure environment variables
 
-2. Install all dependencies for the entire Monorepo
-    ```bash
-    # This uses NPM Workspaces to install frontend, backend, and shared libraries at once
-    npm install
-    ```
-3. Initialize your environment configuration
-    ```bash
-    # Create your local .env file from the provided template
-    cp .env.example .env
-    ```
-4. Launch the Sandboxed Docker Development Environment
-    ```bash
-    # This builds the images and starts the containers in detached mode
-    docker-compose -f docker-compose.dev.yml up -d --build
-    ```
-5. Verify that the containers are healthy
-    ```bash
-    docker ps
-    # You should see: dev-backend, dev-frontend, dev-mongo, and dev-mongo-backup
-    ```
-6. Check the database seeding logs
-    ```bash
-    # Verify that the 'init-backup.sh' script successfully restored the test data
-    docker logs dev-time-tracker-mongo
-    ```
+```bash
+cp .env.example .env
+```
 
-### Demo: Getting Data out of the System
+The example file includes the default ports used by the app:
 
-To verify everything is wired up correctly, you can perform a quick smoke test:
-1. Open your browser: Navigate to http://localhost:5051.
-2. Verify Seed Data: You should see the GitHub-style Heatmap already populated with the dummy data from the seed script.
-3. Test the Timer: 
-    * Click the "Start Timer" button.
-    * Wait a few seconds.
-    * Click "Stop".
-4. Confirm Persistence: Refresh the page or check the Activity Logs section.
-5. Your new entry should appear at the top, confirming that:
-    * The Frontend (React) successfully communicated with the Backend (Express).
-    * The data was successfully persisted to the Database (MongoDB).
+- backend: 5050
+- frontend: 5051
+- MongoDB: 27017
 
-## 🔧 Running the tests <a name = "tests"></a>
+### Option A: Run locally
 
-This project utilizes a multi-layered testing strategy to ensure logic remains consistent across the monorepo, especially when sharing types between the frontend and backend services.
+For native development, start the shared package, backend, and frontend separately:
 
-### Unit & Integration Tests
+```bash
+npm run build --workspace=@time-tracker/shared
+npm run dev --workspace=backend
+npm run dev --workspace=frontend
+```
 
-We use **Vitest** for the frontend and shared library due to its speed and native support for the Vite environment. These tests focus on verifying core business logic within custom hooks and utility functions.
+Then open the app in your browser at:
 
-* **Logic Hooks:** Tests for `useActivities`, `useTimerMode`, and `useManualEntryMode` to ensure state transitions (starting/stopping timers) work correctly.
-* **Utilities:** Validation of date formatting and activity intensity tier calculations in `utils.tsx`.
+- frontend: http://localhost:5051
+- backend API: http://localhost:5050
 
-**To run the frontend unit tests:**
+### Option B: Run with Docker for development
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+This spins up the full stack with a seeded development database.
+
+### Option C: Run with Docker for production
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+This is intended for a self-hosted deployment environment with persistent storage and automated backup behavior.
+
+## Usage
+
+### Timer Mode
+
+Use Timer Mode when you want to track a task in real time. Start the timer when work begins, stop it when it ends, and the app records the session and updates the dashboard.
+
+### Manual Entry Mode
+
+Use Manual Entry Mode when you need to log work retroactively. Enter a date, start time, and end time to add a historical entry.
+
+### Activity History and Heatmap
+
+The overview and history pages let you inspect existing entries, manage activities, and review visual activity density over time.
+
+## Testing
+
+Frontend unit tests are written with Vitest and React Testing Library.
+
+Run the frontend test suite:
+
 ```bash
 npm run test --workspace=frontend
 ```
 
-### Break down into end to end tests
+Run lint checks:
 
-Our End-to-End (E2E) tests verify the "happy path" of a user journey. They ensure that the React frontend, Express backend, and MongoDB database are communicating correctly as a unified system.
-
-**What they test**
-
-1. The Persistence Cycle: Starting a timer on the UI, refreshing the page, and verifying the timer is still running (validating Backend state persistence).
-2. Manual Entry Splitting: Verifying that an activity logged across midnight successfully creates two distinct entries in the database to maintain heatmap accuracy.
-3. Database Seeding: Ensuring the docker-compose.dev.yml correctly restores the dummy data upon container startup.
-
-**Example of running a smoke test in the dev environment**
 ```bash
-# Spin up the development stack
-docker-compose -f docker-compose.dev.yml up -d
-
-# Trigger the test suite against the running containers
-npm run test:e2e --workspace=frontend
+npm run lint --workspace=frontend
 ```
 
-### And coding style tests
+## Project Structure
 
-We enforce a consistent coding style to maintain readability and prevent "diff noise" in Pull Requests. This is handled via Prettier for formatting and ESLint for static code analysis across the Monorepo.
-
-**What they test and why**
-
-1. Syntax Consistency: Ensures all files follow the same rules (e.g., single quotes, 2-space indentation, and trailing commas). This prevents unnecessary merge conflicts caused by different IDE settings.
-
-2. Type Integrity: Checks that no any types are leaking into the codebase and that all shared interfaces from @time-tracker/shared are implemented correctly.
-
-3. Best Practices: Identifies unused variables, missing dependencies in React hooks (like useEffect), and potential logic errors before the code even runs.
-
-**Example of checking and fixing style issues**
-```bash
-# Check the entire monorepo for linting and type errors
-npm run lint
-
-# Automatically fix formatting and style issues
-npm run pretty
+```text
+backend/        Express API and MongoDB integration
+frontend/       React application and UI components
+shared/         Shared TypeScript models and constants
+seed/           Database seed assets
+scripts/        Deployment and operational helpers
 ```
 
-## 🎈 Usage <a name="usage"></a>
+## Roadmap
 
-The Activity Tracker is designed to capture your productivity with minimal friction, supporting both real-time focus and retroactive logging.
+The current roadmap and planned enhancements are documented in [ROADMAP.md](ROADMAP.md).
 
-### Timer Mode (Real-time Tracking)
+## Contributing
 
-This is the "set and forget" mode for active tasks.
+Contributions are welcome. If you would like to improve the app, please open an issue or submit a pull request with a clear summary of the change.
 
-* Start: Click the Start Timer button when you begin a task.
+## License
 
-* Persistence: The timer state is managed by the backend; you can close your browser or switch devices, and the timer will continue ticking.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
-* Stop: Once finished, provide a brief description and hit Stop. The system calculates the duration to the millisecond and updates your heatmap instantly.
+## Authors
 
-* Splitting Logic: If you log an activity that starts at 10:00 PM and ends at 2:00 AM the next day, the system intelligently splits the record into two entries so your daily intensity metrics remain accurate for both dates.
-
-
-### Manual Entry (Retroactive Logging)
-
-For those times you were away from your desk or forgot to start the timer.
-
-* Toggle: Switch to "Manual Entry" mode.
-
-* Input: Select the date, start time, and end time.
-
-* Submit: Log the entry to the DB on confirmation
-
-### Data Visualization & Dashboard
-
-* GitHub-Style Heatmap: Visualize your consistency over the last year. Darker cells represent higher activity density (Tiers 1–4).
-
-* Activity Logs: A chronological list of all tracked time. You can delete or edit logs directly from this view.
-
-
-## 🚀 Deployment <a name = "deployment"></a>
-
-The system is architected to be flexible across three distinct environments.
-
-### Local Native Deployment (Development)
-
-Best for rapid UI/Logic development without Docker overhead.
-
-Requirements: Local MongoDB instance running on ```27017```.
-
-**Process**
-```bash
-npm install
-npm run dev --workspace=@time-tracker/shared  # Build shared types
-npm run dev --workspace=backend               # Start API
-npm run dev --workspace=frontend              # Start React
-```
-
-### Docker Dev Deployment (Sandboxed)
-
-Best for testing the full-stack orchestration with a pre-seeded database.
-
-* Features: Automatically restores dummy data from ./seed/test-db.gz on every boot.
-
-**Process**
-```bash
-docker-compose -f docker-compose.dev.yml up -d --build
-```
-* Ports: Frontend: ```5051```, Backend: ```5050```, Mongo: ```27018```.
-
-### Production Deployment (Home Server)
-
-* Optimized for long-term hosting on a dedicated server behind a mobile hotspot.
-
-* Resilience: Containers use the restart: unless-stopped policy to recover from power cuts automatically.
-
-* Backups: A sidecar container performs a full mongodump every 24 hours to the host's ./backups directory.
-
-**Process**
-```bash
-# Ensure your .env has VITE_API_BASE_URL=http://<home-server-ip>:<backend-port>/api
-docker-compose -f docker-compose.prod.yml up -d --build
-```
-
-## ⛏️ Built Using <a name = "built_using"></a>
-
-This project utilizes a modern **MERN** stack optimized with **TypeScript** and **Docker** to ensure high performance, type safety, and seamless monorepo integration.
-
-### Core Stack
-- [MongoDB](https://www.mongodb.com/) - NoSQL Database for flexible activity logging and persistence.
-- [Express](https://expressjs.com/) - Fast, unopinionated back-end framework for the REST API.
-- [React](https://react.dev/) - Frontend library (v19) for building the reactive user interface.
-- [Node.js](https://nodejs.org/en/) - JavaScript runtime (v24 LTS) powering the server-side environment.
-
-### Frontend & UI
-- [Vite](https://vitejs.dev/) - Next-generation frontend tooling for ultra-fast HMR and bundling.
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework (v4) for modern, responsive styling.
-- [Recharts](https://recharts.org/) - Composable charting library used for the activity intensity heatmap.
-- [Lucide React](https://lucide.dev/) - A clean and consistent icon toolkit.
-
-### Engineering & DevOps
-- [TypeScript](https://www.typescriptlang.org/) - Static type checking shared across the monorepo via NPM workspaces.
-- [Docker](https://www.docker.com/) - Containerization for reproducible environments across Dev and Prod.
-- [Vitest](https://vitest.dev/) - Blazing fast unit testing framework natively integrated with Vite.
-- [Mongoose](https://mongoosejs.com/) - Elegant MongoDB object modeling and schema validation.
-
-## ✍️ Authors <a name = "authors"></a>
-
-- [@ayushr2345](https://github.com/ayushr2345) - Idea, System Architecture, and Development
-
-See also the list of [contributors](https://github.com/kylelobo/The-Documentation-Compendium/contributors) who participated in this project.
-
-## 🎉 Acknowledgements <a name = "acknowledgement"></a>
-
-* Quantified Self Movement - For the inspiration to track and visualize daily productivity.
-
-* The GitHub Team - For the original design of the contribution heatmap, which serves as the core visualization of this project.
-
-* Open Source Community - For the incredible tools like Docker, React, and MongoDB that make self-hosting accessible.
+- Ayush Ranjan - project development and architecture
