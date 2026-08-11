@@ -4,7 +4,9 @@
 # 1. CONFIGURATION
 # ==========================================
 # Change this to the exact path where your repository lives on the server
-PROJECT_DIR="/home/ayushr2345/apps/time-tracker-v2"
+PROJECT_PARENT="/home/ayushr2345/apps/TimeTracker"
+PROJECT_NAME="time-tracker-v2"
+PROJECT_DIR="/home/ayushr2345/apps/TimeTracker/$PROJECT_NAME"
 BRANCH="master"
 
 # Fix for Cron: Cron runs with a very limited environment. 
@@ -79,7 +81,7 @@ fi
 # 5. AUTO-UPDATE THE RUNNER
 # ==========================================
 # (Make sure there are no spaces in the file paths here!)
-cp $PROJECT_DIR/scripts/deploy.sh /home/ayushr2345/apps/deploy.sh
-chmod +x /home/ayushr2345/apps/deploy.sh
+cp $PROJECT_DIR/scripts/deploy.sh $PROJECT_PARENT/deploy.sh
+chmod +x $PROJECT_PARENT/deploy.sh
 
 echo "========================================"
